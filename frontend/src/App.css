@@ -641,3 +641,97 @@ header {
   border-radius: 16px;
   border: 1px solid var(--border-color);
 }
+
+/* =========================================================================
+   📈 EES FDC SPC 即時管制圖與 Cpk 戰情版樣式
+   ========================================================================= */
+.spc-layout-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 992px) {
+  .spc-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* OOC 閃爍雷達光圈動畫 */
+@keyframes radarGlow {
+  0% {
+    r: 3.5px;
+    stroke-opacity: 1;
+    stroke-width: 1px;
+  }
+  50% {
+    stroke-opacity: 0.8;
+  }
+  100% {
+    r: 9px;
+    stroke-opacity: 0;
+    stroke-width: 2.2px;
+  }
+}
+
+/* =========================================================================
+   🤖 FAB-GPT AI 智能排查終端樣式
+   ========================================================================= */
+.copilot-terminal {
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.85), 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.terminal-prompt {
+  color: #c084fc;
+  font-weight: bold;
+  margin-right: 0.35rem;
+  text-shadow: 0 0 6px rgba(192, 132, 252, 0.5);
+}
+
+/* 終端閃爍游標 */
+.terminal-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background-color: #c084fc;
+  animation: blinkCursor 0.8s infinite;
+  box-shadow: 0 0 8px rgba(192, 132, 252, 0.8);
+  vertical-align: middle;
+}
+
+@keyframes blinkCursor {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* 智能注入 Toast 提示 */
+.visual-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 0.9rem 1.4rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9999;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  animation: slideInToast 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideInToast {
+  from {
+    transform: translateY(50px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
