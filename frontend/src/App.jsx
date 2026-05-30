@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 function App() {
 
@@ -35,6 +35,8 @@ function App() {
   const [modalLoading, setModalLoading] = useState(false);
 
   const [modalAction, setModalAction] = useState(''); // 'assign' | 'close' | ''
+
+  const actionFormRef = useRef(null);
 
   const [modalError, setModalError] = useState('');
 
@@ -215,6 +217,20 @@ function App() {
     fetchEvents();
 
   }, [filterStatus]);
+
+  useEffect(() => {
+
+    if (!modalAction || !actionFormRef.current) return;
+
+    const scrollTimer = window.setTimeout(() => {
+
+      actionFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    }, 80);
+
+    return () => window.clearTimeout(scrollTimer);
+
+  }, [modalAction]);
 
   // 獲取所有機台清單
 
@@ -3497,7 +3513,7 @@ function App() {
 
                     {modalAction === 'assign' && (
 
-                      <div className="action-form">
+                      <div className="action-form workflow-action-form" ref={actionFormRef}>
 
                         <div className="form-group" style={{marginBottom: '1rem'}}>
 
@@ -3557,7 +3573,7 @@ function App() {
 
                      {modalAction === 'close' && (
 
-                       <div className="action-form">
+                       <div className="action-form workflow-action-form" ref={actionFormRef}>
 
                          {/* 📷 步驟 1：上傳實體影像佐證 */}
 
