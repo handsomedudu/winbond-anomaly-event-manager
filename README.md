@@ -104,6 +104,24 @@ npm run dev
 > [!NOTE]
 > 後端 API 服務單獨運行於 `http://localhost:3001`，前端所有向 `/api/*` 發送的請求均會自動代理至後端。
 
+### 手機與外部網路展示（Cloudflare Tunnel）
+若需在手機或不同網路環境展示本專案，請先啟動開發伺服器，再另開一個終端機啟動 Cloudflare Tunnel：
+```bash
+npm run dev
+```
+```bash
+npm run share
+```
+或直接執行：
+```bash
+.\share-to-mobile.bat
+```
+終端機會產生 `https://xxxxx.trycloudflare.com` 格式的網址，將該網址傳到手機瀏覽器即可開啟。第一次使用若尚未安裝 `cloudflared`，請先執行：
+```bash
+winget install --id Cloudflare.cloudflared
+```
+完整手機展示流程可參考 `MOBILE_SHARE.md`。
+
 ---
 
 ## 🛠️ SOP 處置流程與狀態防呆驗證
@@ -132,3 +150,8 @@ npm run dev
 ### 3. 如何驗證 AI 輸出的正確性？
 * **API 邊界條件手動測試**：透過手動在瀏覽器操作，並故意透過 Postman / cURL 發送缺漏欄位的 `PUT` 狀態更新請求，驗證後端的 DDL CHECK 約束與 Express 的防呆阻斷邏輯是否確實生效。
 * **SQLite 檔案數據驗證**：在進行狀態操作（如：Pendings ➔ Closed）後，透過 SQLite 檢視工具與 API 端點重刷，確認變更已持久化寫入 `database.db` 檔案，且 `updated_at` 時間戳記為最新本機時間。
+
+### 4. 手機展示通道修正心路歷程
+* **問題觀察**：原先使用 LocalTunnel 將 Vite 前端分享至手機時，手機端會先出現需要複製 IP 的安全提醒頁，且 Vite 也會因外部網址的 Host header 不在允許清單中，顯示 `Blocked request. This host is not allowed.`。這代表問題不是 React 頁面本身，而是開發伺服器的 host 防護與 tunnel 服務的中介驗證流程共同造成。
+* **修正方向判斷**：我沒有直接把 Vite 的 `allowedHosts` 設為 `true`，因為那會放寬所有來源，對展示用開發伺服器不必要。最後改採 Cloudflare Tunnel，並在 `vite.config.js` 只允許 `.trycloudflare.com`，同時設定 `host: '0.0.0.0'`，讓手機與外部 tunnel 都能連入，但仍保留明確的 host 白名單。
+* **落地做法**：新增 `npm run share` 與 `share-to-mobile.bat`，統一使用 `cloudflared tunnel --protocol http2 --url http://localhost:5173`。`http2` 會走 TCP，較能避開公司或學校網路對 UDP/QUIC 的限制；腳本也會先檢查 `cloudflared` 是否已安裝、5173 前端服務是否正在執行，降低面試展示時的操作失誤。
