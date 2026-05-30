@@ -27,6 +27,7 @@ function App() {
   const [engineerName, setEngineerName] = useState('');
   const [resolutionText, setResolutionText] = useState('');
   const [attachment, setAttachment] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // 動態更新系統時間
   useEffect(() => {
@@ -178,6 +179,31 @@ function App() {
     } finally {
       setModalLoading(false);
     }
+  };
+
+  // ⚡ AI Anomaly Copilot 智能診斷與對策推薦
+  const handleAICopilot = () => {
+    setAiLoading(true);
+    setModalError('');
+    setTimeout(() => {
+      let aiDraft = '';
+      const code = selectedEvent.event_code;
+      
+      if (code === 'E-1024') {
+        aiDraft = `【AI 根因診斷】：ASML 曝光機雷射共振腔鏡片微幅偏移或老化，導致發光效率衰減（置信度：94%）。\n\n【SOP 處置對策】：\n1. 執行雷射光源基準點能量自動校正 (Auto-Calibration) 程式。\n2. 安排設備工程師現場檢查光路鏡片是否有髒汙，並進行預防性保養清潔。\n3. 重啟監控測試，確認能量回到標準規格 (Specs) 內，隨後恢復線上生產。`;
+      } else if (code === 'E-2048') {
+        aiDraft = `【AI 根因診斷】：Lam 蝕刻機腔體之氣體流量控制器 (MFC) 發生壓電閥閥門卡滯或硬體異常（置信度：88%）。\n\n【SOP 處置對策】：\n1. 執行 EAP 線上通訊重設，嘗試重新啟動 MFC 控制卡並復歸通訊。\n2. 若重啟無效，立即指派設備工程師至現場更換同規格 MFC 備品，並重新進行漏率測試 (Leak Rate Test)。\n3. 腔體真空度回到 10^-6 Torr 標準規格後，恢復線上自動化生產。`;
+      } else if (code === 'E-0512') {
+        aiDraft = `【AI 根因診斷】：CVD 腔體加熱器阻抗微幅變異，或熱電耦 (Thermocouple) 訊號干擾導致加熱溫度波動（置信度：82%）。\n\n【SOP 處置對策】：\n1. 調整 CVD 加熱系統之 PID 閉迴路控制參數，穩定溫度控制曲線。\n2. 安排機台離線，對熱電耦感測器進行精密二點法校正。\n3. 觀察 3 個 Batch 生產之溫度波動曲線，確認回到 control limit (OOC) 內。`;
+      } else if (code === 'E-0256') {
+        aiDraft = `【AI 根因診斷】：PVD 機台傳送手臂馬達編碼器 (Encoder) 積碳或皮帶微幅磨損鬆脫（置信度：85%）。\n\n\n【SOP 處置對策】：\n1. 現場拆卸手臂護蓋，使用精密清潔劑保養編碼器光學感應點。\n2. 重新執行 Robot Arm 示教 (Teaching) 定位，寫入最新絕對坐標參數。\n3. 手動測試傳送 Dummy Wafer 10 次，確認傳送抖動訊號完全消失。`;
+      } else {
+        aiDraft = `【AI 根因診斷】：分析此異常日誌後，研判為設備硬體或感測器回報值微幅超出常規值限制（置信度：75%）。\n\n【SOP 處置對策】：\n1. 建議先重啟該機台硬體與通訊模組，進行預防性自我測試。\n2. 檢查感測器傳輸線路是否受雜訊干擾，並重置極值上限。\n3. 若重複發生，請聯絡設備供應商進廠排查。`;
+      }
+      
+      setResolutionText(aiDraft);
+      setAiLoading(false);
+    }, 1200); // 模擬 AI 讀取 log 的思考延遲
   };
 
   // 處理檔案選取與 Base64 轉換
@@ -584,7 +610,29 @@ function App() {
                         <div className="form-group" style={{marginBottom: '1rem'}}>
                           <label>請輸入異常處理對策與原因分析 (Required)</label>
                           <div style={{display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.75rem', marginTop: '0.25rem'}}>
-                            <span style={{fontSize: '0.75rem', color: 'var(--text-muted)', width: '100%'}}>💡 常用 SOP 範本快速套用：</span>
+                            <div style={{width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem'}}>
+                              <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>💡 常用 SOP 範本快速套用：</span>
+                              <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                  padding: '0.3rem 0.75rem',
+                                  fontSize: '0.75rem',
+                                  borderRadius: '8px',
+                                  background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+                                  color: 'white',
+                                  border: 'none',
+                                  boxShadow: '0 0 12px rgba(168, 85, 247, 0.4)',
+                                  cursor: 'pointer',
+                                  fontWeight: '600',
+                                  animation: aiLoading ? 'pulse 1s infinite' : 'none'
+                                }}
+                                onClick={handleAICopilot}
+                                disabled={aiLoading}
+                              >
+                                {aiLoading ? '⚡ AI 正在分析異常日誌與對策...' : '✨ AI 智能診斷與 SOP 推薦 (Beta)'}
+                              </button>
+                            </div>
                             {[
                               '重啟機台並執行基準點自動校正 (Auto-Calibration) 復歸。',
                               '氣體流量控制器 (MFC) 異常，已更換全新備品並測試通過。',
