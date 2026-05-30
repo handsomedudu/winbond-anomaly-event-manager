@@ -737,7 +737,7 @@ header {
 
 
 /* Cleanroom Floorplan pulsing keyframes */
-@keyframes cleanroomPulse {
+@keyframes cleanroomPulse {
   0% {
     transform: scale(0.6);
     opacity: 0.8;
@@ -746,4 +746,404 @@ header {
     transform: scale(1.6);
     opacity: 0;
   }
-}
+}
+
+/* =========================================================================
+   手機版自適應排版修正
+   ========================================================================= */
+html,
+body,
+#root {
+  max-width: 100%;
+}
+
+.app-container,
+.dashboard-panel,
+.filter-panel,
+.copilot-panel,
+.table-container,
+.modal-content,
+.ees-layout-container,
+.equipment-card-grid,
+.spc-chart-panel,
+.spc-layout-grid {
+  min-width: 0;
+}
+
+img,
+video,
+svg {
+  max-width: 100%;
+}
+
+@media (max-width: 980px) {
+  .ees-layout-container {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .cleanroom-visualizer-card {
+    min-height: 260px !important;
+  }
+
+  .cleanroom-visualizer-card svg {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-container {
+    width: 100%;
+    padding: 0.85rem;
+  }
+
+  header {
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .brand-section {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .logo-badge {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 10px;
+  }
+
+  .brand-info {
+    min-width: 0;
+  }
+
+  .brand-info h1 {
+    font-size: 1.18rem;
+    line-height: 1.28;
+    -webkit-text-fill-color: #f8fafc;
+    overflow-wrap: anywhere;
+  }
+
+  .brand-info p {
+    font-size: 0.72rem;
+    line-height: 1.45;
+    white-space: normal;
+  }
+
+  .system-time {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.76rem;
+    line-height: 1.4;
+  }
+
+  .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat-card {
+    min-height: 104px;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .stat-info p {
+    font-size: 0.78rem;
+    white-space: normal;
+  }
+
+  .stat-info h2 {
+    font-size: 1.9rem;
+  }
+
+  .dashboard-panel,
+  .filter-panel,
+  .copilot-panel {
+    width: 100%;
+    padding: 1rem !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+  }
+
+  .dashboard-panel h3,
+  .copilot-header h3 {
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: flex-start !important;
+    line-height: 1.45;
+  }
+
+  .dashboard-panel h3 > span,
+  .copilot-header h3 > span {
+    margin-top: 0.2rem;
+  }
+
+  .ees-layout-container,
+  .equipment-card-grid,
+  .spc-layout-grid,
+  .filter-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  .cleanroom-visualizer-card {
+    width: 100%;
+    min-height: 300px !important;
+    padding: 1rem !important;
+  }
+
+  .cleanroom-visualizer-card svg {
+    height: 245px !important;
+    min-height: 245px !important;
+  }
+
+  .spc-panel-header,
+  .copilot-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .spc-panel-header > div:first-child {
+    width: 100%;
+    align-items: flex-start !important;
+  }
+
+  .spc-panel-header h4,
+  .spc-panel-header p {
+    overflow-wrap: anywhere;
+  }
+
+  .spc-toolbar {
+    width: 100%;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.6rem !important;
+  }
+
+  .spc-demo-controls {
+    width: 100%;
+    flex-wrap: wrap !important;
+    gap: 0.45rem !important;
+    padding: 0.55rem !important;
+  }
+
+  .spc-demo-controls > span {
+    width: 100%;
+  }
+
+  .spc-demo-controls .btn {
+    flex: 1 1 138px;
+    min-height: 38px;
+    white-space: normal;
+  }
+
+  .spc-layout-grid {
+    margin-top: 0.75rem;
+  }
+
+  .copilot-quick-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .copilot-quick-actions .btn {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    white-space: normal;
+    line-height: 1.35;
+    min-height: 42px;
+  }
+
+  .copilot-query-row {
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+  }
+
+  .copilot-query-row .filter-input,
+  .copilot-query-row .btn {
+    width: 100%;
+  }
+
+  .copilot-terminal {
+    overflow-x: auto;
+    padding: 1rem !important;
+    font-size: 0.76rem !important;
+    line-height: 1.6;
+  }
+
+  .filter-panel {
+    margin-bottom: 1rem;
+  }
+
+  .filter-grid,
+  .filter-group,
+  .filter-input,
+  .filter-buttons {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .filter-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .filter-buttons .btn {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .table-container {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .event-table,
+  .event-table tbody,
+  .event-table tr,
+  .event-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .event-table thead {
+    display: none;
+  }
+
+  .event-table tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.85rem;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .event-table td {
+    display: grid;
+    grid-template-columns: 5.25rem minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    border-bottom: 0;
+    padding: 0.42rem 0;
+    font-size: 0.88rem;
+  }
+
+  .event-table td::before {
+    content: attr(data-label);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .event-table td[data-label="描述"] {
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    line-height: 1.5;
+  }
+
+  .event-table td > * {
+    min-width: 0;
+  }
+
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 0.75rem;
+    overflow-y: auto;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    padding: 1rem;
+    border-radius: 16px;
+    overflow: visible;
+  }
+
+  .modal-header {
+    gap: 0.75rem;
+  }
+
+  .modal-title-area h2 {
+    font-size: 1.1rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-grid {
+    padding: 1rem;
+    gap: 0.9rem;
+  }
+
+  .action-buttons-group,
+  .modal-form-actions {
+    flex-direction: column !important;
+  }
+
+  .action-buttons-group .btn,
+  .modal-form-actions .btn,
+  .action-form .btn {
+    width: 100%;
+    min-height: 42px;
+    white-space: normal;
+  }
+
+  .action-form {
+    padding: 1rem;
+  }
+
+  .form-input {
+    min-width: 0;
+  }
+
+  .visual-toast {
+    left: 0.85rem;
+    right: 0.85rem;
+    bottom: 0.85rem;
+    text-align: center;
+  }
+
+  .no-data {
+    padding: 2rem 1rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-container {
+    padding: 0.7rem;
+  }
+
+  .filter-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .event-table td {
+    grid-template-columns: 4.8rem minmax(0, 1fr);
+    gap: 0.55rem;
+  }
+
+  .cleanroom-visualizer-card svg {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+}

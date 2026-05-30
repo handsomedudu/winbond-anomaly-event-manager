@@ -1297,7 +1297,7 @@ function App() {
 
       <section style={{marginBottom: '2rem'}}>
 
-        <div style={{
+        <div className="dashboard-panel" style={{
 
           background: 'var(--bg-card)',
 
@@ -1371,7 +1371,7 @@ function App() {
 
             {/* Left side: Equipment Cards */}
 
-            <div style={{
+            <div className="equipment-card-grid" style={{
 
               display: 'grid',
 
@@ -1737,7 +1737,7 @@ function App() {
 
             }}>
 
-              <div style={{
+              <div className="spc-panel-header" style={{
 
                 display: 'flex',
 
@@ -1777,7 +1777,7 @@ function App() {
 
                 {/* 智慧狀態標籤 */}
 
-                <div style={{
+                <div className="spc-toolbar" style={{
 
                   display: 'flex',
 
@@ -1791,7 +1791,7 @@ function App() {
 
                   {/* 模擬注入控制按鈕 */}
 
-                  <div style={{
+                  <div className="spc-demo-controls" style={{
 
                     display: 'flex',
 
@@ -2587,7 +2587,7 @@ function App() {
 
       }}>
 
-        <div style={{
+        <div className="copilot-header" style={{
 
           display: 'flex',
 
@@ -2673,7 +2673,7 @@ function App() {
 
           </div>
 
-          <div style={{
+          <div className="copilot-quick-actions" style={{
 
             display: 'flex',
 
@@ -2769,7 +2769,7 @@ function App() {
 
         {/* 自由輸入查詢 */}
 
-        <div style={{
+        <div className="copilot-query-row" style={{
 
           display: 'flex',
 
@@ -3167,9 +3167,9 @@ function App() {
 
                 <tr key={event.id} onClick={() => handleOpenModal(event.id)}>
 
-                  <td className="mono-font">#{event.id}</td>
+                  <td className="mono-font" data-label="事件ID">#{event.id}</td>
 
-                  <td>
+                  <td data-label="等級">
 
                     <span className={`badge badge-${event.severity.toLowerCase()}`}>
 
@@ -3179,9 +3179,9 @@ function App() {
 
                   </td>
 
-                  <td className="mono-font" style={{fontWeight: 700, color: '#f8fafc'}}>{event.event_code}</td>
+                  <td className="mono-font" data-label="異常代碼" style={{fontWeight: 700, color: '#f8fafc'}}>{event.event_code}</td>
 
-                  <td>
+                  <td data-label="機台">
 
                     <div>{event.machine_id}</div>
 
@@ -3189,13 +3189,13 @@ function App() {
 
                   </td>
 
-                  <td style={{maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                  <td data-label="描述" style={{maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
 
                     {event.description}
 
                   </td>
 
-                  <td>
+                  <td data-label="狀態">
 
                     <span className={`badge badge-status-${event.status.toLowerCase()}`}>
 
@@ -3205,9 +3205,9 @@ function App() {
 
                   </td>
 
-                  <td className="time-cell">{formatDateTime(event.created_at)}</td>
+                  <td className="time-cell" data-label="發生時間">{formatDateTime(event.created_at)}</td>
 
-                  <td>{event.assigned_engineer ? `🛠️ ${event.assigned_engineer}` : <span style={{color: 'var(--text-muted)'}}>-</span>}</td>
+                  <td data-label="工程師">{event.assigned_engineer ? `🛠️ ${event.assigned_engineer}` : <span style={{color: 'var(--text-muted)'}}>-</span>}</td>
 
                 </tr>
 
@@ -3529,7 +3529,7 @@ function App() {
 
                         </div>
 
-                        <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
+                        <div className="modal-form-actions" style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
 
                           <button className="btn btn-secondary" onClick={() => setModalAction('')}>取消</button>
 
@@ -3807,7 +3807,7 @@ function App() {
 
                         </div>
 
-                        <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
+                        <div className="modal-form-actions" style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
 
                           <button className="btn btn-secondary" onClick={() => setModalAction('')}>取消</button>
 
@@ -3862,4 +3862,3 @@ function App() {
 }
 
 export default App;
-
