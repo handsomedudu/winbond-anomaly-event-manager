@@ -1,23 +1,13 @@
 @echo off
 chcp 65001 >nul
-title 華邦電異常監控系統 - LocalTunnel 手機共享啟動器
+title 華邦電異常監控系統 - 已改用 Cloudflare Tunnel
 
 echo ========================================================
-echo     華邦電異常監控系統 - LocalTunnel 手機共享啟動器
+echo     此專案已改用 Cloudflare Tunnel 進行手機共享
 echo ========================================================
 echo.
-echo 正在啟動 LocalTunnel 共享通道...
-echo.
-echo ========================================================
-echo  【使用指南】
-echo  1. 請複製下方顯示的 "your url is: https://..." 網址。
-echo  2. 將網址輸入至手機瀏覽器開啟，即可跨網際網路進行展示！
-echo  3. ⚠️ 第一次在手機打開時，畫面上會出現一個「Friendly Reminder」安全畫面。
-echo     請直接點擊按鈕【Click to Continue】，即可順利進入監控系統！
-echo  4. 欲停止共享時，請直接在本視窗按 Ctrl + C 或關閉此視窗。
-echo ========================================================
+echo LocalTunnel 容易出現 IP 驗證頁，手機展示較不穩定。
+echo 接下來會改用 share-to-mobile.bat 啟動 Cloudflare Tunnel。
 echo.
 
-call npx localtunnel --port 5173
-
-pause
+call "%~dp0share-to-mobile.bat"
