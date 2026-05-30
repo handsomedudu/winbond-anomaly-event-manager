@@ -127,6 +127,20 @@ npm.cmd run share:cloudflare
 ```
 完整手機展示流程可參考 `MOBILE_SHARE.md`。
 
+### 免費雲端部署（Cloudflare Pages + D1）
+若希望網站在你的電腦關機後仍可運作，可部署到 Cloudflare Pages + D1。此模式會將前端放在 Cloudflare Pages，並用 Pages Functions + D1 取代本機 Express/JSON 資料庫，提供固定的 `*.pages.dev` 雲端網址。
+
+第一次部署流程：
+```bash
+$env:NODE_OPTIONS='--use-system-ca'
+npx.cmd --yes --registry=https://registry.npmjs.org wrangler login
+npm run cloudflare:db:create
+npm run cloudflare:db:init
+npm run cloudflare:deploy
+```
+
+完整說明請參考 `CLOUD_DEPLOY.md`。
+
 ---
 
 ## 🛠️ SOP 處置流程與狀態防呆驗證

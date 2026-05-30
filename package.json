@@ -9,6 +9,11 @@
     "share": "share-to-mobile.bat",
     "share:tailscale": "share-to-mobile.bat",
     "share:cloudflare": "share-to-mobile-cloudflare.bat",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/clean-frontend-dist.ps1 && npm --prefix frontend run build",
+    "cloudflare:db:create": "set NODE_OPTIONS=--use-system-ca&& npx --yes --registry=https://registry.npmjs.org wrangler d1 create winbond-anomaly-db --binding DB --update-config",
+    "cloudflare:db:init": "set NODE_OPTIONS=--use-system-ca&& npx --yes --registry=https://registry.npmjs.org wrangler d1 execute winbond-anomaly-db --remote --file=cloudflare/d1-schema.sql --yes",
+    "cloudflare:dev": "npm run build && set NODE_OPTIONS=--use-system-ca&& npx --yes --registry=https://registry.npmjs.org wrangler pages dev frontend/dist",
+    "cloudflare:deploy": "npm run build && set NODE_OPTIONS=--use-system-ca&& npx --yes --registry=https://registry.npmjs.org wrangler pages deploy frontend/dist",
     "start": "node backend/server.js"
   },
   "dependencies": {

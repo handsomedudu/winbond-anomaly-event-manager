@@ -19,7 +19,15 @@ CREATE TABLE IF NOT EXISTS anomaly_events (
     operator_id TEXT,
     assigned_engineer TEXT,
     resolution TEXT,
+    report_file TEXT,
     FOREIGN KEY(machine_id) REFERENCES machines(id)
+);
+
+-- 工程師資料表
+CREATE TABLE IF NOT EXISTS engineers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    department TEXT NOT NULL
 );
 
 -- 初始機台資料
@@ -29,6 +37,13 @@ INSERT OR IGNORE INTO machines (id, name, type, location) VALUES
 ('CVD-03', '化學氣相沉積機 03 (Applied Materials)', 'Deposition', 'Area-B 1F'),
 ('PVD-04', '物理氣相沉積機 04 (Novellus)', 'Deposition', 'Area-B 2F'),
 ('MET-05', '關鍵尺寸量測儀 05 (KLA-Tencor)', 'Metrology', 'Area-C 1F');
+
+-- 初始工程師資料
+INSERT OR IGNORE INTO engineers (id, name, department) VALUES
+('ENG-001', 'Kevin Chang', 'EAP 自動化課'),
+('ENG-002', 'Sarah Wang', 'EES 系統課'),
+('ENG-003', 'David Wu', '製程整合課'),
+('ENG-004', 'Alice Lin', '設備工程課');
 
 -- 初始模擬異常事件資料
 -- 1. 待處理 (Pending) 異常
