@@ -6,7 +6,7 @@
   "scripts": {
     "install-all": "npm install && npm --prefix frontend install",
     "dev": "concurrently \"nodemon --ignore backend/database.json --ignore backend/database.db backend/server.js\" \"npm --prefix frontend run dev\"",
-    "share": "cloudflared tunnel --protocol http2 --url http://localhost:5173",
+    "share": "share-to-mobile.bat",
     "start": "node backend/server.js"
   },
   "dependencies": {

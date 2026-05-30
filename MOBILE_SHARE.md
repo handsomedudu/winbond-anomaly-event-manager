@@ -16,26 +16,31 @@ winget install --id Cloudflare.cloudflared
 cloudflared --version
 ```
 
-## 啟動專案
+## 雙擊啟動
 
-先啟動後端與前端：
+完成第一次安裝後，可以直接雙擊專案根目錄的：
 
-```powershell
-cd "C:\Users\zxc08\OneDrive\桌面\應徵資料\華邦電"
-npm.cmd run dev
+```text
+share-to-mobile.bat
 ```
 
-看到前端顯示 `http://localhost:5173` 後，另開一個終端機執行：
+此檔案會自動：
 
-```powershell
-.\share-to-mobile.bat
-```
+1. 檢查 `npm.cmd` 與 `cloudflared` 是否可用。
+2. 若前端尚未啟動，另開視窗執行 `npm.cmd run dev`。
+3. 等待 `http://localhost:5173` 可連線。
+4. 啟動 Cloudflare Tunnel。
+5. 自動複製 `https://xxxxx.trycloudflare.com` 網址到剪貼簿，並在電腦瀏覽器開啟。
 
-也可以直接使用 npm script：
+也可以用指令啟動同一個流程：
 
 ```powershell
 npm.cmd run share
 ```
+
+## 手動啟動
+
+若想分開觀察前後端與 tunnel log，也可以先執行 `npm.cmd run dev`，再另開終端機執行 `.\share-to-mobile.bat`。
 
 ## 手機開啟
 
