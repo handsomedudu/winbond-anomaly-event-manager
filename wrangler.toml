@@ -5,4 +5,4 @@ pages_build_output_dir = "frontend/dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "winbond-anomaly-db"
-database_id = "local-development"
+database_id = "acdf1fb2-b575-4b74-9685-979aab3404ba"

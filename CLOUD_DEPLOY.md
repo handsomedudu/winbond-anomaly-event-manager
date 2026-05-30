@@ -2,6 +2,12 @@
 
 這個專案的雲端版使用 Cloudflare Pages 托管前端，Pages Functions 托管 `/api/*`，D1 保存異常事件與工程師資料。部署後網站會跑在 Cloudflare 的 `*.pages.dev` 網址，不需要本機電腦保持開機。
 
+正式展示網址：
+
+```text
+https://winbond-anomaly-event-manager.pages.dev/
+```
+
 ## 為什麼選這個方案
 
 - Cloudflare Pages Free plan 可部署靜態前端，免費方案每月有 500 次 build 額度。

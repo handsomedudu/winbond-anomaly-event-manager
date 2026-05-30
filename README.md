@@ -130,6 +130,11 @@ npm.cmd run share:cloudflare
 ### 免費雲端部署（Cloudflare Pages + D1）
 若希望網站在你的電腦關機後仍可運作，可部署到 Cloudflare Pages + D1。此模式會將前端放在 Cloudflare Pages，並用 Pages Functions + D1 取代本機 Express/JSON 資料庫，提供固定的 `*.pages.dev` 雲端網址。
 
+目前正式展示網址：
+```text
+https://winbond-anomaly-event-manager.pages.dev/
+```
+
 第一次部署流程：
 ```bash
 $env:NODE_OPTIONS='--use-system-ca'
