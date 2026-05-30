@@ -104,20 +104,26 @@ npm run dev
 > [!NOTE]
 > 後端 API 服務單獨運行於 `http://localhost:3001`，前端所有向 `/api/*` 發送的請求均會自動代理至後端。
 
-### 手機與外部網路展示（Cloudflare Tunnel）
-若需在手機或不同網路環境展示本專案，第一次使用請先安裝 `cloudflared`：
-```bash
-winget install --id Cloudflare.cloudflared
+### 手機與外部網路展示（Tailscale Funnel 固定網址）
+若需在手機或不同網路環境展示本專案，預設改用 Tailscale Funnel。它會使用這台電腦在 tailnet 內的固定 `*.ts.net` 網址，比 Cloudflare Quick Tunnel 的隨機網址更適合反覆請朋友測試。
+
+第一次使用請先安裝並登入 Tailscale：
+```text
+https://tailscale.com/download/windows
 ```
-安裝完成後，直接雙擊專案根目錄的：
+安裝完成並登入後，直接雙擊專案根目錄的：
 ```text
 share-to-mobile.bat
 ```
-此腳本會自動啟動 `npm.cmd run dev`、等待前端服務就緒、開啟 Cloudflare Tunnel，並將產生的 `https://xxxxx.trycloudflare.com` 網址複製到剪貼簿與電腦瀏覽器。
+此腳本會自動啟動 `npm.cmd run dev`、等待前端服務就緒、開啟 Tailscale Funnel，並將固定的 `https://xxxxx.ts.net` 網址複製到剪貼簿與電腦瀏覽器。只要同一台電腦、同一個 Tailscale 帳號與 tailnet 不變，網址會維持固定；展示期間請讓電腦保持開機且不要進入睡眠。
 
 也可以使用指令啟動同一個流程：
 ```bash
 npm.cmd run share
+```
+若現場網路不允許 Tailscale，也保留 Cloudflare Tunnel 備援：
+```bash
+npm.cmd run share:cloudflare
 ```
 完整手機展示流程可參考 `MOBILE_SHARE.md`。
 
@@ -152,5 +158,5 @@ npm.cmd run share
 
 ### 4. 手機展示通道修正心路歷程
 * **問題觀察**：原先使用 LocalTunnel 將 Vite 前端分享至手機時，手機端會先出現需要複製 IP 的安全提醒頁，且 Vite 也會因外部網址的 Host header 不在允許清單中，顯示 `Blocked request. This host is not allowed.`。這代表問題不是 React 頁面本身，而是開發伺服器的 host 防護與 tunnel 服務的中介驗證流程共同造成。
-* **修正方向判斷**：我沒有直接把 Vite 的 `allowedHosts` 設為 `true`，因為那會放寬所有來源，對展示用開發伺服器不必要。最後改採 Cloudflare Tunnel，並在 `vite.config.js` 只允許 `.trycloudflare.com`，同時設定 `host: '0.0.0.0'`，讓手機與外部 tunnel 都能連入，但仍保留明確的 host 白名單。
-* **落地做法**：新增 `npm.cmd run share` 與 `share-to-mobile.bat`，讓展示流程可以直接雙擊啟動。腳本會自動檢查 `cloudflared`、啟動 `npm.cmd run dev`、等待 5173 前端服務就緒，再使用 `cloudflared tunnel --protocol http2 --url http://localhost:5173` 建立公開網址。`http2` 會走 TCP，較能避開公司或學校網路對 UDP/QUIC 的限制；網址產生後也會自動複製到剪貼簿並開啟瀏覽器，降低面試展示時的操作失誤。
+* **修正方向判斷**：我沒有直接把 Vite 的 `allowedHosts` 設為 `true`，因為那會放寬所有來源，對展示用開發伺服器不必要。先前改採 Cloudflare Tunnel 解掉 LocalTunnel 的 IP 驗證頁，但 Quick Tunnel 仍會每次產生不同網址，且 tunnel 停止後網址會失效。因此進一步改用 Tailscale Funnel 作為預設分享方式，讓同一台電腦可以使用固定的 `*.ts.net` 網址；`vite.config.js` 則只允許 `.ts.net` 與備援用的 `.trycloudflare.com`。
+* **落地做法**：`npm.cmd run share` 與 `share-to-mobile.bat` 現在會啟動 Tailscale Funnel。腳本會自動檢查 Tailscale 是否安裝、啟動 `npm.cmd run dev`、等待 5173 前端服務就緒，再使用 `tailscale funnel 5173` 建立公開網址。網址產生後會自動複製到剪貼簿並開啟瀏覽器；若使用環境無法跑 Tailscale，仍可透過 `npm.cmd run share:cloudflare` 使用 Cloudflare Tunnel 備援。

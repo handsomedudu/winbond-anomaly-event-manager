@@ -1,14 +1,14 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Winbond Mobile Share - Tailscale Funnel
+title Winbond Mobile Share - Cloudflare Tunnel
 
 echo ========================================================
-echo        Winbond Mobile Share - Tailscale Funnel
+echo        Winbond Mobile Share - Cloudflare Tunnel
 echo ========================================================
 echo.
-echo This launcher starts the dev server when needed, then opens Tailscale Funnel.
-echo The fixed *.ts.net URL will be copied to clipboard and opened locally.
+echo This launcher starts the dev server when needed, then opens a Cloudflare Tunnel.
+echo The tunnel URL will be copied to clipboard and opened in your default browser.
 echo.
 
 echo [Step 1/3] Checking required tools...
@@ -21,24 +21,19 @@ if errorlevel 1 (
   exit /b 1
 )
 
-call :find_tailscale
+where cloudflared >nul 2>nul
 if errorlevel 1 (
   echo.
-  echo Tailscale was not found. Install Tailscale for Windows first:
+  echo cloudflared was not found. Install Cloudflare Tunnel first:
   echo.
-  echo   https://tailscale.com/download/windows
+  echo   winget install --id Cloudflare.cloudflared
   echo.
-  echo After installation:
-  echo   1. Open Tailscale from the system tray.
-  echo   2. Log in to your Tailscale account.
-  echo   3. Reopen this launcher.
+  echo After installation, reopen this launcher.
   echo.
-  start "" "https://tailscale.com/download/windows"
   pause
   exit /b 1
 )
 echo Required tools are ready.
-echo Tailscale CLI: %TAILSCALE_EXE%
 echo.
 
 echo [Step 2/3] Checking Vite on localhost:5173...
@@ -64,22 +59,21 @@ if errorlevel 1 (
 echo Vite is ready on localhost:5173.
 echo.
 
-echo [Step 3/3] Starting Tailscale Funnel...
+echo [Step 3/3] Starting Cloudflare Tunnel...
 echo.
 echo ========================================================
 echo  How to use
-echo  1. Wait for the https://xxxxx.ts.net URL.
+echo  1. Wait for the https://xxxxx.trycloudflare.com URL.
 echo  2. The URL will be copied to clipboard and opened locally.
 echo  3. Send that URL to your phone browser.
-echo  4. Keep this PC awake while sharing.
-echo  5. Press Ctrl+C in this window to stop sharing.
+echo  4. Press Ctrl+C in this window to stop sharing.
 echo ========================================================
 echo.
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start-tailscale-funnel.ps1" -TailscaleExe "%TAILSCALE_EXE%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start-cloudflare-tunnel.ps1"
 if errorlevel 1 (
   echo.
-  echo Tailscale Funnel failed. Check Tailscale login, Funnel permission, or network access.
+  echo Cloudflare Tunnel failed. Check network or firewall access for cloudflared.
   echo.
   pause
   exit /b 1
@@ -97,24 +91,5 @@ for /l %%i in (1,1,60) do (
   call :check_frontend
   if not errorlevel 1 exit /b 0
   timeout /t 1 /nobreak >nul
-)
-exit /b 1
-
-:find_tailscale
-set "TAILSCALE_EXE="
-where tailscale.exe >nul 2>nul
-if not errorlevel 1 (
-  for /f "delims=" %%P in ('where tailscale.exe 2^>nul') do (
-    set "TAILSCALE_EXE=%%P"
-    exit /b 0
-  )
-)
-if exist "%ProgramFiles%\Tailscale\tailscale.exe" (
-  set "TAILSCALE_EXE=%ProgramFiles%\Tailscale\tailscale.exe"
-  exit /b 0
-)
-if exist "%LocalAppData%\Tailscale\tailscale.exe" (
-  set "TAILSCALE_EXE=%LocalAppData%\Tailscale\tailscale.exe"
-  exit /b 0
 )
 exit /b 1

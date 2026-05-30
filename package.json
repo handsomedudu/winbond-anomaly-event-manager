@@ -7,6 +7,8 @@
     "install-all": "npm install && npm --prefix frontend install",
     "dev": "concurrently \"nodemon --ignore backend/database.json --ignore backend/database.db backend/server.js\" \"npm --prefix frontend run dev\"",
     "share": "share-to-mobile.bat",
+    "share:tailscale": "share-to-mobile.bat",
+    "share:cloudflare": "share-to-mobile-cloudflare.bat",
     "start": "node backend/server.js"
   },
   "dependencies": {
