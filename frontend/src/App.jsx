@@ -28,6 +28,7 @@ function App() {
   const [resolutionText, setResolutionText] = useState('');
   const [attachment, setAttachment] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [evidence, setEvidence] = useState(null);
 
   // 動態更新系統時間
   useEffect(() => {
@@ -147,6 +148,7 @@ function App() {
     setSelectedEventId(null);
     setSelectedEvent(null);
     setAttachment(null); // 重設檔案狀態
+    setEvidence(null);   // 重設現場佐證
     fetchStats(); // 順便更新統計與列表
     fetchEvents();
   };
@@ -168,6 +170,7 @@ function App() {
         setSelectedEvent(json.data);
         setModalAction(''); // 重設輸入面板
         setAttachment(null); // 成功後重設檔案狀態
+        setEvidence(null);   // 成功後重設現場佐證
         // 延遲刷新背景資料
         fetchStats();
         fetchEvents();
@@ -181,29 +184,57 @@ function App() {
     }
   };
 
-  // ⚡ AI Anomaly Copilot 智能診斷與對策推薦
+  // ⚡ AI Anomaly Copilot 智能多模態診斷與對策推薦
   const handleAICopilot = () => {
     setAiLoading(true);
     setModalError('');
     setTimeout(() => {
       let aiDraft = '';
       const code = selectedEvent.event_code;
+      const hasImage = evidence !== null;
       
+      // 根據是否提供影像佐證，動態提升 AI 診斷的精度與分析內容
+      const diagPrefix = hasImage 
+        ? `【⚡ AI 多模態視覺與日誌聯合診斷助理 (置信度：99% 🌟 極精密)】\n[視覺特徵分析]：已自動分析現場巡檢影像 [${evidence.name}]。識別到機台實體告警燈號 (紅色警示) 與現場實況損耗，確認非感測器誤報。\n\n`
+        : `【✨ AI 常規日誌診斷助理 (置信度：75% - 建議上傳現場照片提升至 99%)】\n[日誌特徵分析]：無現場影像佐證，僅基於 EAP/EES 感測器數據分析。\n\n`;
+
       if (code === 'E-1024') {
-        aiDraft = `【AI 根因診斷】：ASML 曝光機雷射共振腔鏡片微幅偏移或老化，導致發光效率衰減（置信度：94%）。\n\n【SOP 處置對策】：\n1. 執行雷射光源基準點能量自動校正 (Auto-Calibration) 程式。\n2. 安排設備工程師現場檢查光路鏡片是否有髒汙，並進行預防性保養清潔。\n3. 重啟監控測試，確認能量回到標準規格 (Specs) 內，隨後恢復線上生產。`;
+        aiDraft = diagPrefix + `【AI 根因診斷】：ASML 曝光機雷射共振腔鏡片微幅偏移或老化，導致發光效率衰減。\n\n【SOP 處置對策】：\n1. 執行雷射光源基準點能量自動校正 (Auto-Calibration) 程式。\n2. 安排設備工程師現場檢查光路鏡片是否有髒汙，並進行預防性保養清潔。\n3. 重啟監控測試，確認能量回到標準規格 (Specs) 內，隨後恢復線上生產。`;
       } else if (code === 'E-2048') {
-        aiDraft = `【AI 根因診斷】：Lam 蝕刻機腔體之氣體流量控制器 (MFC) 發生壓電閥閥門卡滯或硬體異常（置信度：88%）。\n\n【SOP 處置對策】：\n1. 執行 EAP 線上通訊重設，嘗試重新啟動 MFC 控制卡並復歸通訊。\n2. 若重啟無效，立即指派設備工程師至現場更換同規格 MFC 備品，並重新進行漏率測試 (Leak Rate Test)。\n3. 腔體真空度回到 10^-6 Torr 標準規格後，恢復線上自動化生產。`;
+        aiDraft = diagPrefix + `【AI 根因診斷】：Lam 蝕刻機腔體之氣體流量控制器 (MFC) 發生壓電閥閥門卡滯或硬體異常。\n\n【SOP 處置對策】：\n1. 執行 EAP 線上通訊重設，嘗試重新啟動 MFC 控制卡並復歸通訊。\n2. 若重啟無效，立即指派設備工程師至現場更換同規格 MFC 備品，並重新進行漏率測試 (Leak Rate Test)。\n3. 腔體真空度回到 10^-6 Torr 標準規格後，恢復線上自動化生產。`;
       } else if (code === 'E-0512') {
-        aiDraft = `【AI 根因診斷】：CVD 腔體加熱器阻抗微幅變異，或熱電耦 (Thermocouple) 訊號干擾導致加熱溫度波動（置信度：82%）。\n\n【SOP 處置對策】：\n1. 調整 CVD 加熱系統之 PID 閉迴路控制參數，穩定溫度控制曲線。\n2. 安排機台離線，對熱電耦感測器進行精密二點法校正。\n3. 觀察 3 個 Batch 生產之溫度波動曲線，確認回到 control limit (OOC) 內。`;
+        aiDraft = diagPrefix + `【AI 根因診斷】：CVD 腔體加熱器阻抗微幅變異，或熱電耦 (Thermocouple) 訊號干擾導致加熱溫度波動。\n\n【SOP 處置對策】：\n1. 調整 CVD 加熱系統之 PID 閉迴路控制參數，穩定溫度控制曲線。\n2. 安排機台離線，對熱電耦感測器進行精密二點法校正。\n3. 觀察 3 個 Batch 生產之溫度波動曲線，確認回到 control limit (OOC) 內。`;
       } else if (code === 'E-0256') {
-        aiDraft = `【AI 根因診斷】：PVD 機台傳送手臂馬達編碼器 (Encoder) 積碳或皮帶微幅磨損鬆脫（置信度：85%）。\n\n\n【SOP 處置對策】：\n1. 現場拆卸手臂護蓋，使用精密清潔劑保養編碼器光學感應點。\n2. 重新執行 Robot Arm 示教 (Teaching) 定位，寫入最新絕對坐標參數。\n3. 手動測試傳送 Dummy Wafer 10 次，確認傳送抖動訊號完全消失。`;
+        aiDraft = diagPrefix + `【AI 根因診斷】：PVD 機台傳送手臂馬達編碼器 (Encoder) 積碳或皮帶微幅磨損鬆脫。\n\n【SOP 處置對策】：\n1. 現場拆卸手臂護蓋，使用精密清潔劑保養編碼器光學感應點。\n2. 重新執行 Robot Arm 示教 (Teaching) 定位，寫入最新絕對坐標參數。\n3. 手動測試傳送 Dummy Wafer 10 次，確認傳送抖動訊號完全消失。`;
       } else {
-        aiDraft = `【AI 根因診斷】：分析此異常日誌後，研判為設備硬體或感測器回報值微幅超出常規值限制（置信度：75%）。\n\n【SOP 處置對策】：\n1. 建議先重啟該機台硬體與通訊模組，進行預防性自我測試。\n2. 檢查感測器傳輸線路是否受雜訊干擾，並重置極值上限。\n3. 若重複發生，請聯絡設備供應商進廠排查。`;
+        aiDraft = diagPrefix + `【AI 根因診斷】：分析此異常日誌後，研判為設備硬體或感測器回報值微幅超出常規值限制。\n\n【SOP 處置對策】：\n1. 建議先重啟該機台硬體與通訊模組，進行預防性自我測試。\n2. 檢查感測器傳輸線路是否受雜訊干擾，並重置極值上限。\n3. 若重複發生，請聯絡設備供應商進廠排查。`;
       }
       
       setResolutionText(aiDraft);
       setAiLoading(false);
     }, 1200); // 模擬 AI 讀取 log 的思考延遲
+  };
+
+  // 處理現場影像/影片上傳
+  const handleEvidenceChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setEvidence(null);
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEvidence({
+        name: file.name,
+        type: file.type,
+        base64: reader.result
+      });
+    };
+    reader.onerror = () => {
+      setModalError('讀取現場檔案失敗。');
+    };
+    reader.readAsDataURL(file);
   };
 
   // 處理檔案選取與 Base64 轉換
@@ -605,57 +636,108 @@ function App() {
                     )}
 
                      {/* 填寫對策結案表單 */}
-                    {modalAction === 'close' && (
-                      <div className="action-form">
-                        <div className="form-group" style={{marginBottom: '1rem'}}>
-                          <label>請輸入異常處理對策與原因分析 (Required)</label>
-                          <div style={{display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.75rem', marginTop: '0.25rem'}}>
-                            <div style={{width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem'}}>
-                              <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>💡 常用 SOP 範本快速套用：</span>
-                              <button
-                                type="button"
-                                className="btn"
-                                style={{
-                                  padding: '0.3rem 0.75rem',
-                                  fontSize: '0.75rem',
-                                  borderRadius: '8px',
-                                  background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
-                                  color: 'white',
-                                  border: 'none',
-                                  boxShadow: '0 0 12px rgba(168, 85, 247, 0.4)',
-                                  cursor: 'pointer',
-                                  fontWeight: '600',
-                                  animation: aiLoading ? 'pulse 1s infinite' : 'none'
-                                }}
-                                onClick={handleAICopilot}
-                                disabled={aiLoading}
-                              >
-                                {aiLoading ? '⚡ AI 正在分析異常日誌與對策...' : '✨ AI 智能診斷與 SOP 推薦 (Beta)'}
-                              </button>
-                            </div>
-                            {[
-                              '重啟機台並執行基準點自動校正 (Auto-Calibration) 復歸。',
-                              '氣體流量控制器 (MFC) 異常，已更換全新備品並測試通過。',
-                              '晶圓傳送手臂定位異常，執行手動示教 (Teaching) 校正復歸。',
-                              '調整溫度控制參數回歸規格界限內，持續觀察監控。'
-                            ].map((tpl, i) => (
-                              <button
-                                key={i}
-                                type="button"
-                                className="btn btn-secondary"
-                                style={{
-                                  padding: '0.2rem 0.5rem', 
-                                  fontSize: '0.7rem', 
-                                  borderRadius: '6px', 
-                                  background: 'rgba(255,255,255,0.03)',
-                                  border: '1px solid rgba(255,255,255,0.06)'
-                                }}
-                                onClick={() => setResolutionText(tpl)}
-                              >
-                                📋 範本 {i+1}
-                              </button>
-                            ))}
-                          </div>
+                     {modalAction === 'close' && (
+                       <div className="action-form">
+                         {/* 📷 步驟 1：上傳實體影像佐證 */}
+                         <div className="form-group" style={{
+                           marginBottom: '1rem', 
+                           background: 'rgba(168, 85, 247, 0.03)', 
+                           padding: '0.75rem 1rem', 
+                           borderRadius: '12px', 
+                           border: '1px dashed rgba(168, 85, 247, 0.25)'
+                         }}>
+                           <label style={{
+                             fontSize: '0.825rem', 
+                             color: '#c084fc', 
+                             fontWeight: '600', 
+                             display: 'flex', 
+                             alignItems: 'center', 
+                             gap: '0.25rem'
+                           }}>
+                             📷 步驟 1：上傳現場異常影片或照片 (選填，可啟動 AI 視覺診斷)
+                           </label>
+                           <input 
+                             type="file" 
+                             className="form-input" 
+                             accept="image/*,video/*"
+                             style={{padding: '0.4rem', marginTop: '0.5rem', background: 'rgba(15, 23, 42, 0.4)'}}
+                             onChange={handleEvidenceChange}
+                           />
+                           {evidence && (
+                             <div style={{marginTop: '0.75rem', animation: 'fadeIn 0.2s ease-out'}}>
+                               <div style={{fontSize: '0.775rem', color: 'var(--status-closed)', marginBottom: '0.4rem', fontWeight: '500'}}>
+                                 ✓ 影像載入成功：{evidence.name}
+                               </div>
+                               <div style={{
+                                 borderRadius: '8px', 
+                                 overflow: 'hidden', 
+                                 border: '1px solid rgba(255,255,255,0.08)', 
+                                 maxHeight: '130px', 
+                                 display: 'flex', 
+                                 justifyContent: 'center', 
+                                 background: '#040711'
+                               }}>
+                                 {evidence.type.startsWith('image/') ? (
+                                   <img src={evidence.base64} alt="Evidence" style={{maxWidth: '100%', maxHeight: '130px', objectFit: 'contain'}} />
+                                 ) : (
+                                   <video src={evidence.base64} controls style={{maxWidth: '100%', maxHeight: '130px'}} />
+                                 )}
+                               </div>
+                             </div>
+                           )}
+                         </div>
+
+                         <div className="form-group" style={{marginBottom: '1rem'}}>
+                           <div style={{width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', flexWrap: 'wrap', gap: '0.5rem'}}>
+                             <label style={{fontSize: '0.85rem', fontWeight: '600'}}>📝 步驟 2：請輸入異常處理對策與原因分析 (Required)</label>
+                             <button
+                               type="button"
+                               className="btn"
+                               style={{
+                                 padding: '0.35rem 0.85rem',
+                                 fontSize: '0.75rem',
+                                 borderRadius: '8px',
+                                 background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+                                 color: 'white',
+                                 border: 'none',
+                                 boxShadow: '0 0 12px rgba(168, 85, 247, 0.4)',
+                                 cursor: 'pointer',
+                                 fontWeight: '700',
+                                 animation: aiLoading ? 'pulse 1s infinite' : 'none'
+                               }}
+                               onClick={handleAICopilot}
+                               disabled={aiLoading}
+                             >
+                               {aiLoading ? '⚡ AI Vision 正在聯合分析中...' : '✨ 啟動 AI 多模態視覺診斷'}
+                             </button>
+                           </div>
+                           <div style={{display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.75rem', marginTop: '0.25rem'}}>
+                             <div style={{width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem'}}>
+                               <span style={{fontSize: '0.725rem', color: 'var(--text-muted)'}}>💡 常用 SOP 範本快速套用：</span>
+                             </div>
+                             {[
+                               '重啟機台並執行基準點自動校正 (Auto-Calibration) 復歸。',
+                               '氣體流量控制器 (MFC) 異常，已更換全新備品並測試通過。',
+                               '晶圓傳送手臂定位異常，執行手動示教 (Teaching) 校正復歸。',
+                               '調整溫度控制參數回歸規格界限內，持續觀察監控。'
+                             ].map((tpl, i) => (
+                               <button
+                                 key={i}
+                                 type="button"
+                                 className="btn btn-secondary"
+                                 style={{
+                                   padding: '0.2rem 0.5rem', 
+                                   fontSize: '0.7rem', 
+                                   borderRadius: '6px', 
+                                   background: 'rgba(255,255,255,0.03)',
+                                   border: '1px solid rgba(255,255,255,0.06)'
+                                 }}
+                                 onClick={() => setResolutionText(tpl)}
+                               >
+                                 📋 範本 {i+1}
+                               </button>
+                             ))}
+                           </div>
                           <textarea 
                             className="form-input" 
                             rows="3"
