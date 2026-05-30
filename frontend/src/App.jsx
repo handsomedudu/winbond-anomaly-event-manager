@@ -534,11 +534,36 @@ function App() {
                       </div>
                     )}
 
-                    {/* 填寫對策結案表單 */}
+                     {/* 填寫對策結案表單 */}
                     {modalAction === 'close' && (
                       <div className="action-form">
                         <div className="form-group" style={{marginBottom: '1rem'}}>
                           <label>請輸入異常處理對策與原因分析 (Required)</label>
+                          <div style={{display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.75rem', marginTop: '0.25rem'}}>
+                            <span style={{fontSize: '0.75rem', color: 'var(--text-muted)', width: '100%'}}>💡 常用 SOP 範本快速套用：</span>
+                            {[
+                              '重啟機台並執行基準點自動校正 (Auto-Calibration) 復歸。',
+                              '氣體流量控制器 (MFC) 異常，已更換全新備品並測試通過。',
+                              '晶圓傳送手臂定位異常，執行手動示教 (Teaching) 校正復歸。',
+                              '調整溫度控制參數回歸規格界限內，持續觀察監控。'
+                            ].map((tpl, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{
+                                  padding: '0.2rem 0.5rem', 
+                                  fontSize: '0.7rem', 
+                                  borderRadius: '6px', 
+                                  background: 'rgba(255,255,255,0.03)',
+                                  border: '1px solid rgba(255,255,255,0.06)'
+                                }}
+                                onClick={() => setResolutionText(tpl)}
+                              >
+                                📋 範本 {i+1}
+                              </button>
+                            ))}
+                          </div>
                           <textarea 
                             className="form-input" 
                             rows="3"
