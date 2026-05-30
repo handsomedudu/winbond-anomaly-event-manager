@@ -3,13 +3,20 @@ const path = require('path');
 
 const dbJsonPath = path.join(__dirname, 'database.json');
 
-// 預設資料（與 schema.sql 保持一致）
+// 預設資料（包含新增的工程師表）
 const defaultMachines = [
   { id: 'EXP-01', name: '曝光機 01 (ASML NXT)', type: 'Lithography', location: 'Area-A 1F' },
   { id: 'ETCH-02', name: '蝕刻機 02 (Lam Research)', type: 'Etch', location: 'Area-A 2F' },
   { id: 'CVD-03', name: '化學氣相沉積機 03 (Applied Materials)', type: 'Deposition', location: 'Area-B 1F' },
   { id: 'PVD-04', name: '物理氣相沉積機 04 (Novellus)', type: 'Deposition', location: 'Area-B 2F' },
   { id: 'MET-05', name: '關鍵尺寸量測儀 05 (KLA-Tencor)', type: 'Metrology', location: 'Area-C 1F' }
+];
+
+const defaultEngineers = [
+  { id: 'ENG-001', name: 'Kevin Chang', department: 'EAP 自動化課' },
+  { id: 'ENG-002', name: 'Sarah Wang', department: 'EES 系統課' },
+  { id: 'ENG-003', name: 'David Wu', department: '製程整合課' },
+  { id: 'ENG-004', name: 'Alice Lin', department: '設備工程課' }
 ];
 
 const defaultEvents = [
@@ -85,13 +92,27 @@ function initDatabase() {
   if (!fs.existsSync(dbJsonPath)) {
     const data = {
       machines: defaultMachines,
+      engineers: defaultEngineers,
       anomaly_events: defaultEvents,
       nextEventId: 6
     };
     fs.writeFileSync(dbJsonPath, JSON.stringify(data, null, 2), 'utf8');
     console.log('資料庫已初始化並寫入 database.json。');
   } else {
-    console.log('已讀取現有的 database.json 資料庫。');
+    // 確保現有 database.json 中也包含 engineers 資料表（防呆升級）
+    try {
+      const content = fs.readFileSync(dbJsonPath, 'utf8');
+      const data = JSON.parse(content);
+      if (!data.engineers) {
+        data.engineers = defaultEngineers;
+        fs.writeFileSync(dbJsonPath, JSON.stringify(data, null, 2), 'utf8');
+        console.log('資料庫已順利升級加入 engineers 資料表。');
+      } else {
+        console.log('已讀取現有的 database.json 資料庫。');
+      }
+    } catch (e) {
+      console.error('讀取升級 database.json 失敗:', e);
+    }
   }
 }
 
@@ -160,12 +181,16 @@ const dbQuery = {
       return dbData.machines;
     }
 
-    // 2. 取得異常事件清單 (帶篩選)
+    // 2. 取得工程師清單
+    if (sqlNormalized.includes('SELECT * FROM engineers')) {
+      return dbData.engineers;
+    }
+
+    // 3. 取得異常事件清單 (帶篩選)
     if (sqlNormalized.includes('anomaly_events e JOIN machines m')) {
       let filtered = [...dbData.anomaly_events];
 
       // 解析並套用參數篩選
-      // 在 server.js 中，params 的順序是由動態 SQL 拼接決定的
       let paramIndex = 0;
 
       if (sqlNormalized.includes('AND e.status = ?')) {
@@ -179,13 +204,13 @@ const dbQuery = {
       }
 
       if (sqlNormalized.includes('AND e.created_at >= ?')) {
-        const startDateVal = params[paramIndex++]; // 格式為 "YYYY-MM-DD 00:00:00"
+        const startDateVal = params[paramIndex++];
         const startTime = new Date(startDateVal).getTime();
         filtered = filtered.filter(e => new Date(e.created_at).getTime() >= startTime);
       }
 
       if (sqlNormalized.includes('AND e.created_at <= ?')) {
-        const endDateVal = params[paramIndex++]; // 格式為 "YYYY-MM-DD 23:59:59"
+        const endDateVal = params[paramIndex++];
         const endTime = new Date(endDateVal).getTime();
         filtered = filtered.filter(e => new Date(e.created_at).getTime() <= endTime);
       }
@@ -213,7 +238,6 @@ const dbQuery = {
     const sqlNormalized = sql.replace(/\s+/g, ' ').trim();
 
     // 1. 更新事件狀態 (Ack)
-    // UPDATE anomaly_events SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
     if (sqlNormalized.includes('UPDATE anomaly_events SET status = ?') && params.length === 2 && params[0] === 'Ack') {
       const [status, id] = params;
       const event = dbData.anomaly_events.find(e => e.id === Number(id));
@@ -226,7 +250,6 @@ const dbQuery = {
     }
 
     // 2. 更新事件狀態與指派人員 (Assign)
-    // UPDATE anomaly_events SET status = ?, assigned_engineer = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
     if (sqlNormalized.includes('assigned_engineer = ?') && !sqlNormalized.includes('resolution = ?')) {
       const [status, assigned_engineer, id] = params;
       const event = dbData.anomaly_events.find(e => e.id === Number(id));
@@ -240,7 +263,6 @@ const dbQuery = {
     }
 
     // 3. 更新事件狀態與結案說明 (Closed)
-    // UPDATE anomaly_events SET status = ?, assigned_engineer = ?, resolution = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
     if (sqlNormalized.includes('resolution = ?')) {
       const [status, assigned_engineer, resolution, id] = params;
       const event = dbData.anomaly_events.find(e => e.id === Number(id));

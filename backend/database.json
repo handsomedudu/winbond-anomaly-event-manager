@@ -38,9 +38,9 @@
       "machine_id": "EXP-01",
       "severity": "Critical",
       "description": "雷射光源能量衰減異常，超出規格臨界值(OOS)。",
-      "status": "Pending",
+      "status": "Ack",
       "created_at": "2026-05-30T14:42:39.142Z",
-      "updated_at": "2026-05-30T14:42:39.142Z",
+      "updated_at": "2026-05-30T15:15:19.585Z",
       "operator_id": "OP-8801",
       "assigned_engineer": null,
       "resolution": null
@@ -98,5 +98,27 @@
       "resolution": "執行鏡頭基準點自動校正(Auto-Calibration)，測試回歸後偏移值歸零，恢復生產。"
     }
   ],
-  "nextEventId": 6
+  "nextEventId": 6,
+  "engineers": [
+    {
+      "id": "ENG-001",
+      "name": "Kevin Chang",
+      "department": "EAP 自動化課"
+    },
+    {
+      "id": "ENG-002",
+      "name": "Sarah Wang",
+      "department": "EES 系統課"
+    },
+    {
+      "id": "ENG-003",
+      "name": "David Wu",
+      "department": "製程整合課"
+    },
+    {
+      "id": "ENG-004",
+      "name": "Alice Lin",
+      "department": "設備工程課"
+    }
+  ]
 }

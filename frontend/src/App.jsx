@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 
 function App() {
   // 資料與載入狀態
-  const [events, setEvents] = useState([]);
-  const [machines, setMachines] = useState([]);
-  const [stats, setStats] = useState({ total: 0, pending: 0, ack: 0, assign: 0, closed: 0 });
-  const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
+    const [events, setEvents] = useState([]);
+    const [machines, setMachines] = useState([]);
+    const [engineers, setEngineers] = useState([]);
+    const [stats, setStats] = useState({ total: 0, pending: 0, ack: 0, assign: 0, closed: 0 });
+    const [loading, setLoading] = useState(true);
+    const [currentTime, setCurrentTime] = useState(new Date());
 
   // 篩選器狀態
   const [filterStatus, setFilterStatus] = useState('');
@@ -35,6 +36,7 @@ function App() {
   // 初始讀取機台清單與數據
   useEffect(() => {
     fetchMachines();
+    fetchEngineers();
     fetchData();
   }, []);
 
@@ -53,6 +55,19 @@ function App() {
       }
     } catch (err) {
       console.error('讀取機台清單錯誤:', err);
+    }
+  };
+
+  // 獲取所有工程師清單
+  const fetchEngineers = async () => {
+    try {
+      const res = await fetch('/api/engineers');
+      const json = await res.json();
+      if (json.success) {
+        setEngineers(json.data);
+      }
+    } catch (err) {
+      console.error('讀取工程師清單錯誤:', err);
     }
   };
 
@@ -492,14 +507,19 @@ function App() {
                     {modalAction === 'assign' && (
                       <div className="action-form">
                         <div className="form-group" style={{marginBottom: '1rem'}}>
-                          <label>請輸入負責工程師姓名 (Required)</label>
-                          <input 
-                            type="text" 
-                            className="form-input" 
-                            placeholder="例如: Kevin Chang"
+                          <label>請選擇負責工程師 (Required)</label>
+                          <select 
+                            className="form-input"
                             value={engineerName}
                             onChange={(e) => setEngineerName(e.target.value)}
-                          />
+                          >
+                            <option value="">-- 請選擇負責工程師 --</option>
+                            {engineers.map(eng => (
+                              <option key={eng.id} value={eng.name}>
+                                {eng.name} ({eng.department})
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
                           <button className="btn btn-secondary" onClick={() => setModalAction('')}>取消</button>

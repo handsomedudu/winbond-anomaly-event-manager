@@ -177,6 +177,17 @@ app.get('/api/machines', async (req, res) => {
   }
 });
 
+// 6. 取得所有工程師清單 (供前端指派選單使用)
+app.get('/api/engineers', async (req, res) => {
+  try {
+    const sql = 'SELECT * FROM engineers ORDER BY id';
+    const engineers = await dbQuery.all(sql);
+    res.json({ success: true, data: engineers });
+  } catch (err) {
+    res.status(500).json({ success: false, message: '無法取得工程師清單：' + err.message });
+  }
+});
+
 // 啟動伺服器
 app.listen(PORT, () => {
   console.log(`後端 Express 伺服器正在運行於 http://localhost:${PORT}`);
