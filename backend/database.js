@@ -31,7 +31,8 @@ const defaultEvents = [
     updated_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     operator_id: 'OP-8801',
     assigned_engineer: null,
-    resolution: null
+    resolution: null,
+    report_file: null
   },
   {
     id: 2,
@@ -44,7 +45,8 @@ const defaultEvents = [
     updated_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     operator_id: 'OP-8802',
     assigned_engineer: null,
-    resolution: null
+    resolution: null,
+    report_file: null
   },
   {
     id: 3,
@@ -57,7 +59,8 @@ const defaultEvents = [
     updated_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
     operator_id: 'OP-8803',
     assigned_engineer: null,
-    resolution: null
+    resolution: null,
+    report_file: null
   },
   {
     id: 4,
@@ -70,7 +73,8 @@ const defaultEvents = [
     updated_at: new Date(Date.now() - 240 * 60 * 1000).toISOString(),
     operator_id: 'OP-8801',
     assigned_engineer: 'Kevin Chang',
-    resolution: null
+    resolution: null,
+    report_file: null
   },
   {
     id: 5,
@@ -83,7 +87,8 @@ const defaultEvents = [
     updated_at: new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString(),
     operator_id: 'OP-8805',
     assigned_engineer: 'Sarah Wang',
-    resolution: '執行鏡頭基準點自動校正(Auto-Calibration)，測試回歸後偏移值歸零，恢復生產。'
+    resolution: '執行鏡頭基準點自動校正(Auto-Calibration)，測試回歸後偏移值歸零，恢復生產。',
+    report_file: null
   }
 ];
 
@@ -103,10 +108,23 @@ function initDatabase() {
     try {
       const content = fs.readFileSync(dbJsonPath, 'utf8');
       const data = JSON.parse(content);
+      let updated = false;
       if (!data.engineers) {
         data.engineers = defaultEngineers;
+        updated = true;
+      }
+      // 確保事件記錄中有 report_file 欄位
+      if (data.anomaly_events) {
+        data.anomaly_events.forEach(e => {
+          if (e.report_file === undefined) {
+            e.report_file = null;
+            updated = true;
+          }
+        });
+      }
+      if (updated) {
         fs.writeFileSync(dbJsonPath, JSON.stringify(data, null, 2), 'utf8');
-        console.log('資料庫已順利升級加入 engineers 資料表。');
+        console.log('資料庫已順利升級加入 engineers 與 report_file 欄位。');
       } else {
         console.log('已讀取現有的 database.json 資料庫。');
       }
@@ -264,12 +282,15 @@ const dbQuery = {
 
     // 3. 更新事件狀態與結案說明 (Closed)
     if (sqlNormalized.includes('resolution = ?')) {
-      const [status, assigned_engineer, resolution, id] = params;
-      const event = dbData.anomaly_events.find(e => e.id === Number(id));
+      const eventId = Number(params[params.length - 1]);
+      const event = dbData.anomaly_events.find(e => e.id === eventId);
       if (event) {
-        event.status = status;
-        event.assigned_engineer = assigned_engineer;
-        event.resolution = resolution;
+        event.status = params[0];
+        event.assigned_engineer = params[1];
+        event.resolution = params[2];
+        if (sqlNormalized.includes('report_file = ?')) {
+          event.report_file = params[3];
+        }
         event.updated_at = new Date().toISOString();
         writeData(dbData);
         return { changes: 1 };

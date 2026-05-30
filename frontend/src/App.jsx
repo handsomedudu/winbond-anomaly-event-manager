@@ -26,6 +26,7 @@ function App() {
   // 操作表單輸入
   const [engineerName, setEngineerName] = useState('');
   const [resolutionText, setResolutionText] = useState('');
+  const [attachment, setAttachment] = useState(null);
 
   // 動態更新系統時間
   useEffect(() => {
@@ -144,6 +145,7 @@ function App() {
   const handleCloseModal = () => {
     setSelectedEventId(null);
     setSelectedEvent(null);
+    setAttachment(null); // 重設檔案狀態
     fetchStats(); // 順便更新統計與列表
     fetchEvents();
   };
@@ -164,6 +166,7 @@ function App() {
         setModalSuccess(json.message);
         setSelectedEvent(json.data);
         setModalAction(''); // 重設輸入面板
+        setAttachment(null); // 成功後重設檔案狀態
         // 延遲刷新背景資料
         fetchStats();
         fetchEvents();
@@ -175,6 +178,27 @@ function App() {
     } finally {
       setModalLoading(false);
     }
+  };
+
+  // 處理檔案選取與 Base64 轉換
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setAttachment(null);
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachment({
+        name: file.name,
+        base64: reader.result.split(',')[1]
+      });
+    };
+    reader.onerror = () => {
+      setModalError('讀取檔案失敗。');
+    };
+    reader.readAsDataURL(file);
   };
 
   // 處理查詢提交
@@ -436,7 +460,27 @@ function App() {
                   {selectedEvent.status === 'Closed' && (
                     <div className="detail-item full-width" style={{background: 'rgba(52, 211, 153, 0.05)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(52, 211, 153, 0.2)'}}>
                       <label style={{color: 'var(--status-closed)'}}>🔧 處理對策與結案說明</label>
-                      <span style={{lineHeight: '1.5', fontWeight: 500}}>{selectedEvent.resolution}</span>
+                      <span style={{lineHeight: '1.5', fontWeight: 500, display: 'block'}}>{selectedEvent.resolution}</span>
+                      {selectedEvent.report_file && (
+                        <div style={{marginTop: '0.75rem'}}>
+                          <a 
+                            href={selectedEvent.report_file} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary"
+                            style={{
+                              display: 'inline-flex', 
+                              padding: '0.35rem 0.75rem', 
+                              fontSize: '0.8rem', 
+                              color: 'var(--status-closed)', 
+                              borderColor: 'rgba(52, 211, 153, 0.3)',
+                              background: 'rgba(52, 211, 153, 0.03)'
+                            }}
+                          >
+                            📄 下載結案報告 (PPT/PDF)
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -573,6 +617,23 @@ function App() {
                             onChange={(e) => setResolutionText(e.target.value)}
                           />
                         </div>
+                        
+                        <div className="form-group" style={{marginBottom: '1rem'}}>
+                          <label style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>📎 上傳結案報告 (PPT / PDF, 選填)</label>
+                          <input 
+                            type="file" 
+                            className="form-input" 
+                            accept=".pdf,.ppt,.pptx"
+                            style={{padding: '0.5rem'}}
+                            onChange={handleFileChange}
+                          />
+                          {attachment && (
+                            <div style={{fontSize: '0.8rem', color: 'var(--status-closed)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                              <span>✓</span> <span>已選取待上傳報告：{attachment.name}</span>
+                            </div>
+                          )}
+                        </div>
+
                         <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
                           <button className="btn btn-secondary" onClick={() => setModalAction('')}>取消</button>
                           <button 
@@ -580,7 +641,8 @@ function App() {
                             style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}
                             onClick={() => handleUpdateStatus('Closed', { 
                               assigned_engineer: engineerName || selectedEvent.assigned_engineer || 'System',
-                              resolution: resolutionText 
+                              resolution: resolutionText,
+                              attachment: attachment
                             })}
                             disabled={!resolutionText.trim()}
                           >

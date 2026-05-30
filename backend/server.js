@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { dbQuery } = require('./database');
 
 const app = express();
@@ -7,7 +8,9 @@ const PORT = process.env.PORT || 3001;
 
 // 中介軟體設定
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 1. 取得統計資訊 (Dashboard Stats)
 app.get('/api/stats', async (req, res) => {
@@ -139,10 +142,30 @@ app.put('/api/events/:id/status', async (req, res) => {
       updateSql = 'UPDATE anomaly_events SET status = ?, assigned_engineer = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
       params.push('Assign', assigned_engineer, id);
     } else if (status === 'Closed') {
+      const { attachment } = req.body;
+      let reportUrl = event.report_file || null;
+      
+      if (attachment && attachment.name && attachment.base64) {
+        const fs = require('fs');
+        const uploadsDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir);
+        }
+        
+        // 建立唯一檔名，防撞名覆蓋
+        const uniqueFilename = `${Date.now()}-${attachment.name}`;
+        const destPath = path.join(uploadsDir, uniqueFilename);
+        
+        // 寫入檔案
+        const buffer = Buffer.from(attachment.base64, 'base64');
+        fs.writeFileSync(destPath, buffer);
+        reportUrl = `/api/uploads/${uniqueFilename}`;
+      }
+      
       // 關閉時若無負責人，保留原負責人或設定 (如果是從 Pending 直接關閉)
       const engineer = assigned_engineer || event.assigned_engineer || 'System';
-      updateSql = 'UPDATE anomaly_events SET status = ?, assigned_engineer = ?, resolution = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-      params.push('Closed', engineer, resolution, id);
+      updateSql = 'UPDATE anomaly_events SET status = ?, assigned_engineer = ?, resolution = ?, report_file = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+      params.push('Closed', engineer, resolution, reportUrl, id);
     }
     
     await dbQuery.run(updateSql, params);
