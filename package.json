@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "install-all": "npm install && npm --prefix frontend install",
-    "dev": "concurrently \"nodemon backend/server.js\" \"npm --prefix frontend run dev\"",
+    "dev": "concurrently \"nodemon --ignore backend/database.json --ignore backend/database.db backend/server.js\" \"npm --prefix frontend run dev\"",
     "start": "node backend/server.js"
   },
   "dependencies": {

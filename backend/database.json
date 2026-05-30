@@ -1,0 +1,102 @@
+{
+  "machines": [
+    {
+      "id": "EXP-01",
+      "name": "曝光機 01 (ASML NXT)",
+      "type": "Lithography",
+      "location": "Area-A 1F"
+    },
+    {
+      "id": "ETCH-02",
+      "name": "蝕刻機 02 (Lam Research)",
+      "type": "Etch",
+      "location": "Area-A 2F"
+    },
+    {
+      "id": "CVD-03",
+      "name": "化學氣相沉積機 03 (Applied Materials)",
+      "type": "Deposition",
+      "location": "Area-B 1F"
+    },
+    {
+      "id": "PVD-04",
+      "name": "物理氣相沉積機 04 (Novellus)",
+      "type": "Deposition",
+      "location": "Area-B 2F"
+    },
+    {
+      "id": "MET-05",
+      "name": "關鍵尺寸量測儀 05 (KLA-Tencor)",
+      "type": "Metrology",
+      "location": "Area-C 1F"
+    }
+  ],
+  "anomaly_events": [
+    {
+      "id": 1,
+      "event_code": "E-1024",
+      "machine_id": "EXP-01",
+      "severity": "Critical",
+      "description": "雷射光源能量衰減異常，超出規格臨界值(OOS)。",
+      "status": "Pending",
+      "created_at": "2026-05-30T14:42:39.142Z",
+      "updated_at": "2026-05-30T14:42:39.142Z",
+      "operator_id": "OP-8801",
+      "assigned_engineer": null,
+      "resolution": null
+    },
+    {
+      "id": 2,
+      "event_code": "E-0512",
+      "machine_id": "CVD-03",
+      "severity": "Warning",
+      "description": "腔體加熱器溫度波動過大，微幅超出控制界線(OOC)。",
+      "status": "Pending",
+      "created_at": "2026-05-30T14:12:39.142Z",
+      "updated_at": "2026-05-30T14:12:39.142Z",
+      "operator_id": "OP-8802",
+      "assigned_engineer": null,
+      "resolution": null
+    },
+    {
+      "id": 3,
+      "event_code": "E-2048",
+      "machine_id": "ETCH-02",
+      "severity": "Critical",
+      "description": "腔體真空度不足，氣體流量控制器(MFC)無響應。",
+      "status": "Ack",
+      "created_at": "2026-05-30T12:12:39.142Z",
+      "updated_at": "2026-05-30T13:12:39.142Z",
+      "operator_id": "OP-8803",
+      "assigned_engineer": null,
+      "resolution": null
+    },
+    {
+      "id": 4,
+      "event_code": "E-0256",
+      "machine_id": "PVD-04",
+      "severity": "Warning",
+      "description": "晶圓傳送手臂(Robot Arm)定位訊號微幅抖動。",
+      "status": "Assign",
+      "created_at": "2026-05-30T09:12:39.142Z",
+      "updated_at": "2026-05-30T11:12:39.142Z",
+      "operator_id": "OP-8801",
+      "assigned_engineer": "Kevin Chang",
+      "resolution": null
+    },
+    {
+      "id": 5,
+      "event_code": "E-3072",
+      "machine_id": "MET-05",
+      "severity": "Warning",
+      "description": "量測鏡頭校正偏移(Tilt Error)。",
+      "status": "Closed",
+      "created_at": "2026-05-29T15:12:39.142Z",
+      "updated_at": "2026-05-29T17:12:39.142Z",
+      "operator_id": "OP-8805",
+      "assigned_engineer": "Sarah Wang",
+      "resolution": "執行鏡頭基準點自動校正(Auto-Calibration)，測試回歸後偏移值歸零，恢復生產。"
+    }
+  ],
+  "nextEventId": 6
+}
