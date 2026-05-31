@@ -1,5 +1,57 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+const SHIFT_CALL_ROOM_URL = 'https://meet.jit.si/Winbond-Fab12-DUDU-Shift-Bridge';
+const SHIFT_PARTICIPANTS = ['DUDU', '製造課 OP-8802', 'Alice Lin', 'Kevin Chang'];
+const FALLBACK_HANDOVER_NOTES = [
+  {
+    id: 1,
+    author: 'Night Shift - Kevin',
+    time: '07:45',
+    text: 'ETCH-02 昨晚 MFC 真空度異常已 Ack，建議早班優先指派設備工程師確認備品與 leak rate。'
+  },
+  {
+    id: 2,
+    author: 'EES Monitor',
+    time: '08:00',
+    text: 'CVD-03 加熱器波動仍在 OOC 邊緣，請 DUDU 於早會後追蹤是否升級為設備派工。'
+  }
+];
+const FALLBACK_SHIFT_MESSAGES = [
+  { id: 1, sender: 'EAP Bot', time: '08:02', text: '今日值班身份已切換為 DUDU，待辦清單依 Critical / Pending / Ack 自動排序。' },
+  { id: 2, sender: '製造課 OP-8802', time: '08:06', text: 'CVD-03 現場塔燈仍為黃燈，等待工程師確認。' }
+];
+
+function formatShiftClock(value) {
+  if (!value) return '--:--';
+  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return '--:--';
+  return date.toLocaleTimeString('zh-TW', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Taipei'
+  });
+}
+
+function normalizeShiftMessage(message) {
+  return {
+    id: message.id,
+    sender: message.sender || '系統提醒',
+    time: message.time || formatShiftClock(message.created_at),
+    text: message.text || message.message || ''
+  };
+}
+
+function normalizeHandoverNote(note) {
+  return {
+    id: note.id,
+    author: note.author || '值班工程師',
+    time: note.time || formatShiftClock(note.created_at),
+    text: note.text || note.note || ''
+  };
+}
+
 function App() {
 
   // 資料與載入狀態
@@ -106,6 +158,30 @@ function App() {
 
   const [copilotTyping, setCopilotTyping] = useState(false);
 
+  const [handoverNotes, setHandoverNotes] = useState(FALLBACK_HANDOVER_NOTES);
+
+  const [handoverDraft, setHandoverDraft] = useState('');
+
+  const [shiftMessages, setShiftMessages] = useState(FALLBACK_SHIFT_MESSAGES);
+
+  const [messageDraft, setMessageDraft] = useState('');
+
+  const [messageSender, setMessageSender] = useState(() => {
+    try {
+      return window.localStorage.getItem('winbond-shift-sender') || 'DUDU';
+    } catch (err) {
+      return 'DUDU';
+    }
+  });
+
+  const [shiftSyncError, setShiftSyncError] = useState('');
+
+  const [voiceCallActive, setVoiceCallActive] = useState(false);
+
+  const [videoCallActive, setVideoCallActive] = useState(false);
+
+  const messageListRef = useRef(null);
+
   // 動態更新系統時間
 
   useEffect(() => {
@@ -208,7 +284,53 @@ function App() {
 
     fetchData();
 
+    fetchShiftMessages();
+
+    fetchHandoverNotes();
+
   }, []);
+
+  useEffect(() => {
+
+    const syncTimer = window.setInterval(() => {
+
+      fetchShiftMessages({ silent: true });
+
+      fetchHandoverNotes({ silent: true });
+
+    }, 3000);
+
+    return () => window.clearInterval(syncTimer);
+
+  }, []);
+
+  useEffect(() => {
+
+    try {
+
+      window.localStorage.setItem('winbond-shift-sender', messageSender);
+
+    } catch (err) {
+
+      // localStorage can be unavailable in privacy modes; the selector still works in memory.
+
+    }
+
+  }, [messageSender]);
+
+  useEffect(() => {
+
+    if (!messageListRef.current) return;
+
+    messageListRef.current.scrollTo({
+
+      top: messageListRef.current.scrollHeight,
+
+      behavior: 'smooth'
+
+    });
+
+  }, [shiftMessages.length]);
 
   // 當主篩選器的狀態改變時，直接進行快速篩選查詢
 
@@ -231,6 +353,154 @@ function App() {
     return () => window.clearTimeout(scrollTimer);
 
   }, [modalAction]);
+
+  const fetchShiftMessages = async ({ silent = false } = {}) => {
+
+    try {
+
+      const res = await fetch('/api/shift/messages');
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+
+        throw new Error(json.message || '無法同步班內訊息');
+
+      }
+
+      setShiftMessages((json.data || []).map(normalizeShiftMessage));
+
+      setShiftSyncError('');
+
+    } catch (err) {
+
+      if (!silent) setShiftSyncError('班內訊息暫時使用本機展示資料，雲端同步稍後重試。');
+
+    }
+
+  };
+
+  const fetchHandoverNotes = async ({ silent = false } = {}) => {
+
+    try {
+
+      const res = await fetch('/api/shift/handover');
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+
+        throw new Error(json.message || '無法同步交班留言');
+
+      }
+
+      setHandoverNotes((json.data || []).map(normalizeHandoverNote));
+
+      setShiftSyncError('');
+
+    } catch (err) {
+
+      if (!silent) setShiftSyncError('交班留言暫時使用本機展示資料，雲端同步稍後重試。');
+
+    }
+
+  };
+
+  const postShiftMessage = async (text, sender = messageSender, kind = 'chat') => {
+
+    const optimisticMessage = {
+
+      id: `local-${Date.now()}`,
+
+      sender,
+
+      time: getShortTime(),
+
+      text
+
+    };
+
+    setShiftMessages(prev => [...prev, optimisticMessage]);
+
+    try {
+
+      const res = await fetch('/api/shift/messages', {
+
+        method: 'POST',
+
+        headers: { 'Content-Type': 'application/json' },
+
+        body: JSON.stringify({ sender, message: text, kind })
+
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+
+        throw new Error(json.message || '班內訊息送出失敗');
+
+      }
+
+      await fetchShiftMessages({ silent: true });
+
+      setShiftSyncError('');
+
+    } catch (err) {
+
+      setShiftSyncError('班內訊息已先顯示在本機，但雲端同步失敗，請檢查網路後重試。');
+
+    }
+
+  };
+
+  const postHandoverNote = async (text, author = '值班工程師 DUDU') => {
+
+    const optimisticNote = {
+
+      id: `local-${Date.now()}`,
+
+      author,
+
+      time: getShortTime(),
+
+      text
+
+    };
+
+    setHandoverNotes(prev => [optimisticNote, ...prev]);
+
+    try {
+
+      const res = await fetch('/api/shift/handover', {
+
+        method: 'POST',
+
+        headers: { 'Content-Type': 'application/json' },
+
+        body: JSON.stringify({ author, note: text })
+
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+
+        throw new Error(json.message || '交班留言新增失敗');
+
+      }
+
+      await fetchHandoverNotes({ silent: true });
+
+      setShiftSyncError('');
+
+    } catch (err) {
+
+      setShiftSyncError('交班留言已先顯示在本機，但雲端同步失敗，請檢查網路後重試。');
+
+    }
+
+  };
 
   // 獲取所有機台清單
 
@@ -1165,6 +1435,118 @@ function App() {
 
   };
 
+  const getShortTime = () => {
+
+    return new Date().toLocaleTimeString('zh-TW', {
+
+      hour: '2-digit',
+
+      minute: '2-digit',
+
+      hour12: false
+
+    });
+
+  };
+
+  const handleAddHandoverNote = async () => {
+
+    const text = handoverDraft.trim();
+
+    if (!text) return;
+
+    setHandoverDraft('');
+
+    await postHandoverNote(text);
+
+  };
+
+  const handleSendShiftMessage = async () => {
+
+    const text = messageDraft.trim();
+
+    if (!text) return;
+
+    setMessageDraft('');
+
+    await postShiftMessage(text, messageSender);
+
+  };
+
+  const handleStartVoiceCall = () => {
+
+    const roomUrl = `${SHIFT_CALL_ROOM_URL}#config.startWithVideoMuted=true`;
+
+    setVoiceCallActive(true);
+
+    setVideoCallActive(false);
+
+    window.open(roomUrl, '_blank', 'noopener,noreferrer');
+
+    postShiftMessage('已開啟真實 Jitsi 語音會議室，通知 OP 與責任工程師同步異常狀態。', 'DUDU', 'call');
+
+  };
+
+  const handleStartVideoCall = () => {
+
+    const roomUrl = SHIFT_CALL_ROOM_URL;
+
+    setVideoCallActive(true);
+
+    setVoiceCallActive(false);
+
+    window.open(roomUrl, '_blank', 'noopener,noreferrer');
+
+    postShiftMessage('已開啟真實 Jitsi 視訊會議室，請現場人員回傳機台面板與警示燈畫面。', 'DUDU', 'call');
+
+  };
+
+  const handleEndCall = () => {
+
+    if (!voiceCallActive && !videoCallActive) return;
+
+    setVoiceCallActive(false);
+
+    setVideoCallActive(false);
+
+    postShiftMessage('通訊已結束，請依交班留言追蹤後續處置。', 'DUDU', 'call');
+
+  };
+
+  const handleShareCallRoom = async () => {
+
+    const shareText = `FAB 12 值班通話室：${SHIFT_CALL_ROOM_URL}`;
+
+    try {
+
+      if (navigator.share) {
+
+        await navigator.share({
+
+          title: 'FAB 12 值班通話室',
+
+          text: shareText,
+
+          url: SHIFT_CALL_ROOM_URL
+
+        });
+
+      } else {
+
+        await navigator.clipboard.writeText(SHIFT_CALL_ROOM_URL);
+
+      }
+
+      postShiftMessage('已分享/複製值班通話室連結，可用第二台手機加入演示。', 'DUDU', 'call');
+
+    } catch (err) {
+
+      postShiftMessage(`分享失敗，請手動複製：${SHIFT_CALL_ROOM_URL}`, '系統提醒', 'call');
+
+    }
+
+  };
+
   // 格式化時間
 
   const formatDateTime = (dateStr) => {
@@ -1203,6 +1585,100 @@ function App() {
 
   };
 
+  const dutyEngineer = {
+
+    name: 'DUDU',
+
+    role: 'FAB 12 現場值班工程師',
+
+    shift: 'Day Shift A',
+
+    desk: 'MA21 EAP/EES Dispatch Desk'
+
+  };
+
+  const statusRank = { Pending: 0, Ack: 1, Assign: 2, Closed: 9 };
+
+  const getDutyAction = (event) => {
+
+    if (event.status === 'Pending') {
+
+      return {
+
+        label: event.severity === 'Critical' ? '立即 Ack / 指派' : '確認受理',
+
+        note: '尚未有人確認，值班工程師需先接手並判斷是否派工。',
+
+        tone: event.severity === 'Critical' ? 'critical' : 'warning'
+
+      };
+
+    }
+
+    if (event.status === 'Ack') {
+
+      return {
+
+        label: '指派負責工程師',
+
+        note: '已確認異常，下一步要依機台/區域指派可處理的工程師。',
+
+        tone: 'ack'
+
+      };
+
+    }
+
+    if (event.status === 'Assign') {
+
+      return {
+
+        label: '追蹤處置結案',
+
+        note: '已有負責人，值班工程師需追蹤對策與結案回報。',
+
+        tone: 'assign'
+
+      };
+
+    }
+
+    return {
+
+      label: '查看紀錄',
+
+      note: '事件已結案，可作為交接與追溯紀錄。',
+
+      tone: 'closed'
+
+    };
+
+  };
+
+  const dutyQueue = [...events]
+
+    .filter(event => event.status !== 'Closed')
+
+    .sort((a, b) => {
+
+      const severityDiff = (a.severity === 'Critical' ? 0 : 1) - (b.severity === 'Critical' ? 0 : 1);
+
+      if (severityDiff !== 0) return severityDiff;
+
+      const statusDiff = (statusRank[a.status] ?? 8) - (statusRank[b.status] ?? 8);
+
+      if (statusDiff !== 0) return statusDiff;
+
+      return new Date(a.created_at) - new Date(b.created_at);
+
+    })
+
+    .slice(0, 4);
+
+  const urgentOpenCount = events.filter(event => event.status !== 'Closed' && event.severity === 'Critical').length;
+
+  const nextDutyEvent = dutyQueue[0];
+
   return (
 
     <div className="app-container">
@@ -1234,6 +1710,363 @@ function App() {
         </div>
 
       </header>
+
+      {/* 值班工程師工作台 */}
+
+      <section className="shift-console">
+
+        <div className="shift-welcome-panel">
+
+          <div className="shift-eyebrow">SIMULATED LOGIN / DUTY MODE</div>
+
+          <h2>歡迎，{dutyEngineer.role}</h2>
+
+          <p>你現在以 {dutyEngineer.desk} 身份登入。此頁面模擬 Fab 現場值班工程師的當班操作：先看交接提醒，再依緊急程度處理 Ack、Assign、Close。</p>
+
+          <div className="shift-profile-grid">
+
+            <div>
+
+              <span>登入身份</span>
+
+              <strong>{dutyEngineer.name}</strong>
+
+            </div>
+
+            <div>
+
+              <span>當班別</span>
+
+              <strong>{dutyEngineer.shift}</strong>
+
+            </div>
+
+            <div>
+
+              <span>負責區域</span>
+
+              <strong>FAB 12 EAP/EES</strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className={`shift-alert-panel ${urgentOpenCount > 0 ? 'critical' : 'normal'}`}>
+
+          <span className="shift-alert-kicker">交接提醒</span>
+
+          <h3>{urgentOpenCount > 0 ? `${urgentOpenCount} 件 Critical 異常尚未結案` : '目前無 Critical 未結案異常'}</h3>
+
+          <p>{nextDutyEvent ? `下一筆優先處理：${nextDutyEvent.event_code} / ${nextDutyEvent.machine_id}，目前狀態 ${nextDutyEvent.status}。` : '目前沒有待處理代辦，可以查看已結案紀錄或持續監控 EES。'}</p>
+
+          <button className="btn btn-primary" onClick={() => nextDutyEvent && handleOpenModal(nextDutyEvent.id)} disabled={!nextDutyEvent}>
+
+            開始處理最高優先代辦
+
+          </button>
+
+        </div>
+
+        <div className="duty-queue-panel">
+
+          <div className="duty-queue-header">
+
+            <div>
+
+              <h3>當班代辦事項</h3>
+
+              <p>由緊急到不緊急排序，符合現場值班工程師的處理順序。</p>
+
+            </div>
+
+            <span>{dutyQueue.length} OPEN</span>
+
+          </div>
+
+          <div className="duty-task-list">
+
+            {dutyQueue.length === 0 ? (
+
+              <div className="duty-empty-state">目前無開放異常事件，請持續監控設備節點。</div>
+
+            ) : dutyQueue.map((event, index) => {
+
+              const dutyAction = getDutyAction(event);
+
+              return (
+
+                <button key={event.id} className={`duty-task-card ${dutyAction.tone}`} onClick={() => handleOpenModal(event.id)}>
+
+                  <span className="duty-task-rank">P{index + 1}</span>
+
+                  <span className="duty-task-main">
+
+                    <span className="duty-task-title">{event.event_code} · {event.machine_id}</span>
+
+                    <span className="duty-task-desc">{event.description}</span>
+
+                    <span className="duty-task-meta">{event.machine_name} · {formatDateTime(event.created_at)}</span>
+
+                  </span>
+
+                  <span className="duty-task-action">
+
+                    <span className={`badge badge-${event.severity.toLowerCase()}`}>{event.severity}</span>
+
+                    <span className={`badge badge-status-${event.status.toLowerCase()}`}>{event.status}</span>
+
+                    <strong>{dutyAction.label}</strong>
+
+                  </span>
+
+                </button>
+
+              );
+
+            })}
+
+          </div>
+
+        </div>
+
+        <div className="shift-collab-panel">
+
+          <div className="handover-board">
+
+            <div className="collab-panel-header">
+
+              <div>
+
+                <h3>交班留言</h3>
+
+                <p>DUDU 可記錄交接重點，供下一班追蹤異常處置。</p>
+
+              </div>
+
+              <span>{handoverNotes.length} NOTES</span>
+
+            </div>
+
+            <div className="handover-compose">
+
+              <textarea
+
+                value={handoverDraft}
+
+                onChange={(e) => setHandoverDraft(e.target.value)}
+
+                placeholder="輸入交班留言，例如：EXP-01 已通知設備課，待 10:30 回報雷射能量校正結果。"
+
+                rows={3}
+
+              />
+
+              <button className="btn btn-primary" onClick={handleAddHandoverNote} disabled={!handoverDraft.trim()}>
+
+                新增交班留言
+
+              </button>
+
+            </div>
+
+            <div className="handover-list">
+
+              {handoverNotes.map(note => (
+
+                <div className="handover-note" key={note.id}>
+
+                  <div>
+
+                    <strong>{note.author}</strong>
+
+                    <span>{note.time}</span>
+
+                  </div>
+
+                  <p>{note.text}</p>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
+          <div className="shift-message-board">
+
+            <div className="collab-panel-header">
+
+              <div>
+
+                <h3>班內訊息</h3>
+
+                <p>兩台手機可用不同身份送訊息，雲端同步後可即時演示。</p>
+
+              </div>
+
+              <span>LIVE</span>
+
+            </div>
+
+            <div className="sender-switch" role="group" aria-label="選擇演示身份">
+
+              {SHIFT_PARTICIPANTS.map(participant => (
+
+                <button
+                  key={participant}
+                  type="button"
+                  className={messageSender === participant ? 'active' : ''}
+                  onClick={() => setMessageSender(participant)}
+                >
+
+                  {participant}
+
+                </button>
+
+              ))}
+
+            </div>
+
+            {shiftSyncError && <div className="shift-sync-warning">{shiftSyncError}</div>}
+
+            <div className="shift-message-list" ref={messageListRef}>
+
+              {shiftMessages.map(message => (
+
+                <div className={`shift-message ${message.sender === messageSender ? 'mine' : ''}`} key={message.id}>
+
+                  <div>
+
+                    <strong>{message.sender}</strong>
+
+                    <span>{message.time}</span>
+
+                  </div>
+
+                  <p>{message.text}</p>
+
+                </div>
+
+              ))}
+
+            </div>
+
+            <div className={`shift-call-card ${videoCallActive ? 'video' : voiceCallActive ? 'voice' : ''}`}>
+
+              <div className="call-room-info">
+
+                <div>
+
+                  <strong>FAB 12 值班通話室</strong>
+
+                  <span>兩台手機開同一個房間即可語音/視訊演示</span>
+
+                </div>
+
+                <button className="call-share-button" onClick={handleShareCallRoom}>
+
+                  分享連結
+
+                </button>
+
+              </div>
+
+              <div className="call-preview">
+
+                {videoCallActive ? (
+
+                  <>
+
+                    <div className="video-tile primary">OP</div>
+
+                    <div className="video-tile secondary">DUDU</div>
+
+                  </>
+
+                ) : voiceCallActive ? (
+
+                  <div className="voice-wave" aria-label="語音通話中">
+
+                    <span></span>
+
+                    <span></span>
+
+                    <span></span>
+
+                    <span></span>
+
+                  </div>
+
+                ) : (
+
+                  <div className="call-standby">待命中 · 可聯繫 OP / 責任工程師</div>
+
+                )}
+
+              </div>
+
+              <div className="shift-call-controls">
+
+                <button className="btn btn-secondary" onClick={handleStartVoiceCall}>
+
+                  語音通話
+
+                </button>
+
+                <button className="btn btn-secondary" onClick={handleStartVideoCall}>
+
+                  視訊連線
+
+                </button>
+
+                <button className="btn btn-secondary" onClick={handleEndCall} disabled={!voiceCallActive && !videoCallActive}>
+
+                  結束
+
+                </button>
+
+              </div>
+
+            </div>
+
+            <div className="shift-message-compose">
+
+              <input
+
+                value={messageDraft}
+
+                onChange={(e) => setMessageDraft(e.target.value)}
+
+                onKeyDown={(e) => {
+
+                  if (e.key === 'Enter') {
+
+                    handleSendShiftMessage();
+
+                  }
+
+                }}
+
+                placeholder={`${messageSender} 輸入班內訊息...`}
+
+              />
+
+              <button className="btn btn-secondary" onClick={handleSendShiftMessage} disabled={!messageDraft.trim()}>
+
+                送出
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
 
       {/* DASHBOARD 統計區塊 */}
 

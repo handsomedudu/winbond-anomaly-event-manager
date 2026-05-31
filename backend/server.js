@@ -211,6 +211,69 @@ app.get('/api/engineers', async (req, res) => {
   }
 });
 
+const shiftMessages = [
+  { id: 1, sender: 'EAP Bot', text: '今日值班身份已切換為 DUDU，待辦清單依 Critical / Pending / Ack 自動排序。', kind: 'system', created_at: new Date(Date.now() - 18 * 60 * 1000).toISOString() },
+  { id: 2, sender: '製造課 OP-8802', text: 'CVD-03 現場塔燈仍為黃燈，等待工程師確認。', kind: 'chat', created_at: new Date(Date.now() - 14 * 60 * 1000).toISOString() },
+  { id: 3, sender: 'DUDU', text: '收到，我先處理 Critical，再回頭追 CVD-03 加熱器波動。', kind: 'chat', created_at: new Date(Date.now() - 11 * 60 * 1000).toISOString() }
+];
+
+const handoverNotes = [
+  { id: 1, author: 'Night Shift - Kevin', text: 'ETCH-02 昨晚 MFC 真空度異常已 Ack，建議早班優先指派設備工程師確認備品與 leak rate。', created_at: new Date(Date.now() - 24 * 60 * 1000).toISOString() },
+  { id: 2, author: 'EES Monitor', text: 'CVD-03 加熱器波動仍在 OOC 邊緣，請 DUDU 於早會後追蹤是否升級為設備派工。', created_at: new Date(Date.now() - 20 * 60 * 1000).toISOString() }
+];
+
+function sanitizeText(value, maxLength = 500) {
+  return String(value || '').trim().slice(0, maxLength);
+}
+
+app.get('/api/shift/messages', (req, res) => {
+  res.json({ success: true, data: shiftMessages.slice(-80) });
+});
+
+app.post('/api/shift/messages', (req, res) => {
+  const sender = sanitizeText(req.body.sender || 'DUDU', 60);
+  const text = sanitizeText(req.body.message || req.body.text, 500);
+  const kind = sanitizeText(req.body.kind || 'chat', 24) || 'chat';
+
+  if (!text) {
+    return res.status(400).json({ success: false, message: '班內訊息不可為空。' });
+  }
+
+  const message = {
+    id: Date.now(),
+    sender,
+    text,
+    kind,
+    created_at: new Date().toISOString()
+  };
+
+  shiftMessages.push(message);
+  res.status(201).json({ success: true, data: message });
+});
+
+app.get('/api/shift/handover', (req, res) => {
+  res.json({ success: true, data: handoverNotes.slice().reverse().slice(0, 40) });
+});
+
+app.post('/api/shift/handover', (req, res) => {
+  const author = sanitizeText(req.body.author || '值班工程師 DUDU', 60);
+  const text = sanitizeText(req.body.note || req.body.text, 700);
+
+  if (!text) {
+    return res.status(400).json({ success: false, message: '交班留言不可為空。' });
+  }
+
+  const note = {
+    id: Date.now(),
+    author,
+    text,
+    created_at: new Date().toISOString()
+  };
+
+  handoverNotes.push(note);
+  res.status(201).json({ success: true, data: note });
+});
+
 // 啟動伺服器
 app.listen(PORT, () => {
   console.log(`後端 Express 伺服器正在運行於 http://localhost:${PORT}`);

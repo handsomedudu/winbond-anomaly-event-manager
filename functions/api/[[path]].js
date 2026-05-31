@@ -1,7 +1,7 @@
 const jsonHeaders = {
   'content-type': 'application/json; charset=utf-8',
   'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET,PUT,OPTIONS',
+  'access-control-allow-methods': 'GET,POST,PUT,OPTIONS',
   'access-control-allow-headers': 'content-type',
 };
 
@@ -123,6 +123,99 @@ async function handleEngineers(db) {
   return json({ success: true, data: results || [] });
 }
 
+function sanitizeText(value, maxLength = 500) {
+  return String(value || '').trim().slice(0, maxLength);
+}
+
+async function handleShiftMessages(db) {
+  const { results } = await db
+    .prepare(
+      `
+      SELECT id, sender, message as text, kind, created_at
+      FROM (
+        SELECT id, sender, message, kind, created_at
+        FROM shift_messages
+        ORDER BY id DESC
+        LIMIT 80
+      )
+      ORDER BY id ASC
+    `
+    )
+    .all();
+
+  return json({ success: true, data: results || [] });
+}
+
+async function handleCreateShiftMessage(db, request) {
+  const body = await request.json();
+  const sender = sanitizeText(body.sender || 'DUDU', 60);
+  const message = sanitizeText(body.message || body.text, 500);
+  const kind = sanitizeText(body.kind || 'chat', 24) || 'chat';
+
+  if (!message) {
+    return json({ success: false, message: '班內訊息不可為空。' }, 400);
+  }
+
+  const result = await db
+    .prepare('INSERT INTO shift_messages (sender, message, kind) VALUES (?, ?, ?)')
+    .bind(sender, message, kind)
+    .run();
+
+  const id = result.meta?.last_row_id;
+  const created = id
+    ? await db
+        .prepare('SELECT id, sender, message as text, kind, created_at FROM shift_messages WHERE id = ?')
+        .bind(id)
+        .first()
+    : await db
+        .prepare('SELECT id, sender, message as text, kind, created_at FROM shift_messages ORDER BY id DESC LIMIT 1')
+        .first();
+
+  return json({ success: true, data: created }, 201);
+}
+
+async function handleHandoverNotes(db) {
+  const { results } = await db
+    .prepare(
+      `
+      SELECT id, author, note as text, created_at
+      FROM handover_notes
+      ORDER BY id DESC
+      LIMIT 40
+    `
+    )
+    .all();
+
+  return json({ success: true, data: results || [] });
+}
+
+async function handleCreateHandoverNote(db, request) {
+  const body = await request.json();
+  const author = sanitizeText(body.author || '值班工程師 DUDU', 60);
+  const note = sanitizeText(body.note || body.text, 700);
+
+  if (!note) {
+    return json({ success: false, message: '交班留言不可為空。' }, 400);
+  }
+
+  const result = await db
+    .prepare('INSERT INTO handover_notes (author, note) VALUES (?, ?)')
+    .bind(author, note)
+    .run();
+
+  const id = result.meta?.last_row_id;
+  const created = id
+    ? await db
+        .prepare('SELECT id, author, note as text, created_at FROM handover_notes WHERE id = ?')
+        .bind(id)
+        .first()
+    : await db
+        .prepare('SELECT id, author, note as text, created_at FROM handover_notes ORDER BY id DESC LIMIT 1')
+        .first();
+
+  return json({ success: true, data: created }, 201);
+}
+
 async function handleEventDetail(db, id) {
   const event = await getEventById(db, id);
   if (!event) {
@@ -230,6 +323,16 @@ export async function onRequest(context) {
 
     if (request.method === 'GET' && resource === 'engineers') {
       return handleEngineers(db);
+    }
+
+    if (resource === 'shift' && id === 'messages') {
+      if (request.method === 'GET') return handleShiftMessages(db);
+      if (request.method === 'POST') return handleCreateShiftMessage(db, request);
+    }
+
+    if (resource === 'shift' && id === 'handover') {
+      if (request.method === 'GET') return handleHandoverNotes(db);
+      if (request.method === 'POST') return handleCreateHandoverNote(db, request);
     }
 
     return json({ success: false, message: 'API route not found.' }, 404);
