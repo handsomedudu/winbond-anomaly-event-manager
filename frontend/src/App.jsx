@@ -90,6 +90,14 @@ function App() {
 
   const actionFormRef = useRef(null);
 
+  const shiftConsoleRef = useRef(null);
+
+  const collaborationRef = useRef(null);
+
+  const aiPanelRef = useRef(null);
+
+  const eventListRef = useRef(null);
+
   const [modalError, setModalError] = useState('');
 
   const [modalSuccess, setModalSuccess] = useState('');
@@ -1429,9 +1437,23 @@ function App() {
 
   // 快速統計面板點選篩選
 
+  const scrollToSection = (ref) => {
+
+    window.setTimeout(() => {
+
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    }, 80);
+
+  };
+
   const handleStatCardClick = (status) => {
 
-    setFilterStatus(filterStatus === status ? '' : status);
+    const nextStatus = filterStatus === status ? '' : status;
+
+    setFilterStatus(nextStatus);
+
+    scrollToSection(eventListRef);
 
   };
 
@@ -1711,9 +1733,131 @@ function App() {
 
       </header>
 
+      {/* 手機版交班大盤 / 快速入口 */}
+
+      <section className="shift-summary-panel" aria-label="交班大盤 case 數量統整">
+
+        <div className="shift-summary-header">
+
+          <div>
+
+            <span>SHIFT HANDOVER OVERVIEW</span>
+
+            <h2>交班大盤 Case 數量統整</h2>
+
+            <p>點擊狀態卡片會直接跳到對應異常列表，方便手機 Demo 聚焦。</p>
+
+          </div>
+
+          <button className="summary-jump-button" onClick={() => scrollToSection(eventListRef)}>
+
+            查看列表
+
+          </button>
+
+        </div>
+
+        <div className="stats-grid shift-summary-grid">
+
+          <button type="button" className={`stat-card total ${filterStatus === '' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('')}>
+
+            <div className="stat-info">
+
+              <p>Total Events</p>
+
+              <h2>{stats.total}</h2>
+
+              <span>全部 Case</span>
+
+            </div>
+
+            <div className="stat-icon">📊</div>
+
+          </button>
+
+          <button type="button" className={`stat-card pending ${filterStatus === 'Pending' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Pending')}>
+
+            <div className="stat-info">
+
+              <p>Pending 待處理</p>
+
+              <h2>{stats.pending}</h2>
+
+              <span>待 DUDU 接手</span>
+
+            </div>
+
+            <div className="stat-icon" style={{color: 'var(--status-pending)'}}>⚠️</div>
+
+          </button>
+
+          <button type="button" className={`stat-card ack ${filterStatus === 'Ack' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Ack')}>
+
+            <div className="stat-info">
+
+              <p>Acknowledged 已確認</p>
+
+              <h2>{stats.ack}</h2>
+
+              <span>待指派工程師</span>
+
+            </div>
+
+            <div className="stat-icon" style={{color: 'var(--status-ack)'}}>👁️</div>
+
+          </button>
+
+          <button type="button" className={`stat-card assign ${filterStatus === 'Assign' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Assign')}>
+
+            <div className="stat-info">
+
+              <p>Assigned 已指派</p>
+
+              <h2>{stats.assign}</h2>
+
+              <span>待追蹤結案</span>
+
+            </div>
+
+            <div className="stat-icon" style={{color: 'var(--status-assign)'}}>🛠️</div>
+
+          </button>
+
+          <button type="button" className={`stat-card closed ${filterStatus === 'Closed' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Closed')}>
+
+            <div className="stat-info">
+
+              <p>Closed 已解決</p>
+
+              <h2>{stats.closed}</h2>
+
+              <span>可回顧對策</span>
+
+            </div>
+
+            <div className="stat-icon" style={{color: 'var(--status-closed)'}}>✅</div>
+
+          </button>
+
+        </div>
+
+      </section>
+
+      <nav className="mobile-focus-nav" aria-label="手機版焦點導覽">
+
+        <button type="button" onClick={() => scrollToSection(shiftConsoleRef)}>值班</button>
+
+        <button type="button" onClick={() => scrollToSection(eventListRef)}>事件</button>
+
+        <button type="button" onClick={() => scrollToSection(aiPanelRef)}>AI</button>
+
+        <button type="button" onClick={() => scrollToSection(collaborationRef)}>協作</button>
+
+      </nav>
+
       {/* 值班工程師工作台 */}
 
-      <section className="shift-console">
+      <section className="shift-console" ref={shiftConsoleRef}>
 
         <div className="shift-welcome-panel">
 
@@ -1831,7 +1975,7 @@ function App() {
 
         </div>
 
-        <div className="shift-collab-panel">
+        <div className="shift-collab-panel" ref={collaborationRef}>
 
           <div className="handover-board">
 
@@ -2063,82 +2207,6 @@ function App() {
             </div>
 
           </div>
-
-        </div>
-
-      </section>
-
-      {/* DASHBOARD 統計區塊 */}
-
-      <section className="stats-grid">
-
-        <div className={`stat-card total ${filterStatus === '' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('')}>
-
-          <div className="stat-info">
-
-            <p>Total Events</p>
-
-            <h2>{stats.total}</h2>
-
-          </div>
-
-          <div className="stat-icon">📊</div>
-
-        </div>
-
-        <div className={`stat-card pending ${filterStatus === 'Pending' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Pending')}>
-
-          <div className="stat-info">
-
-            <p>Pending 待處理</p>
-
-            <h2>{stats.pending}</h2>
-
-          </div>
-
-          <div className="stat-icon" style={{color: 'var(--status-pending)'}}>⚠️</div>
-
-        </div>
-
-        <div className={`stat-card ack ${filterStatus === 'Ack' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Ack')}>
-
-          <div className="stat-info">
-
-            <p>Acknowledged 已確認</p>
-
-            <h2>{stats.ack}</h2>
-
-          </div>
-
-          <div className="stat-icon" style={{color: 'var(--status-ack)'}}>👁️</div>
-
-        </div>
-
-        <div className={`stat-card assign ${filterStatus === 'Assign' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Assign')}>
-
-          <div className="stat-info">
-
-            <p>Assigned 已指派</p>
-
-            <h2>{stats.assign}</h2>
-
-          </div>
-
-          <div className="stat-icon" style={{color: 'var(--status-assign)'}}>🛠️</div>
-
-        </div>
-
-        <div className={`stat-card closed ${filterStatus === 'Closed' ? 'active-filter' : ''}`} onClick={() => handleStatCardClick('Closed')}>
-
-          <div className="stat-info">
-
-            <p>Closed 已解決</p>
-
-            <h2>{stats.closed}</h2>
-
-          </div>
-
-          <div className="stat-icon" style={{color: 'var(--status-closed)'}}>✅</div>
 
         </div>
 
@@ -3412,7 +3480,7 @@ function App() {
 
       </section>
 
-      <section className="copilot-panel" style={{
+      <section className="copilot-panel" ref={aiPanelRef} style={{
 
         background: 'var(--bg-card)',
 
@@ -3972,7 +4040,31 @@ function App() {
 
       {/* TABLE 異常列表區塊 */}
 
-      <main className="table-container">
+      <main className="table-container" ref={eventListRef}>
+
+        <div className="event-list-toolbar">
+
+          <div>
+
+            <span>EVENT LIST</span>
+
+            <h3>{filterStatus ? `${filterStatus} 狀態 Case` : '全部異常事件'}</h3>
+
+            <p>{filterStatus ? '已由交班大盤套用狀態篩選，可點卡片切換其他狀態。' : '目前顯示全部異常，可由上方交班大盤快速聚焦。'}</p>
+
+          </div>
+
+          {filterStatus && (
+
+            <button type="button" onClick={() => handleStatCardClick('')}>
+
+              清除篩選
+
+            </button>
+
+          )}
+
+        </div>
 
         {loading ? (
 
