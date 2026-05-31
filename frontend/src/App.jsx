@@ -3519,29 +3519,41 @@ function App() {
 
                           <label>請選擇負責工程師 (Required)</label>
 
-                          <select
+                          <div className="engineer-picker" role="radiogroup" aria-label="負責工程師">
 
-                            className="form-input"
+                            {engineers.map(eng => {
 
-                            value={engineerName}
+                              const isSelected = engineerName === eng.name;
 
-                            onChange={(e) => setEngineerName(e.target.value)}
+                              return (
 
-                          >
+                                <button
 
-                            <option value="">-- 請選擇負責工程師 --</option>
+                                  key={eng.id}
 
-                            {engineers.map(eng => (
+                                  type="button"
 
-                              <option key={eng.id} value={eng.name}>
+                                  className={`engineer-option ${isSelected ? 'selected' : ''}`}
 
-                                {eng.name} ({eng.department})
+                                  aria-pressed={isSelected}
 
-                              </option>
+                                  onClick={() => setEngineerName(eng.name)}
 
-                            ))}
+                                >
 
-                          </select>
+                                  <span className="engineer-option-name">{eng.name}</span>
+
+                                  <span className="engineer-option-dept">{eng.department}</span>
+
+                                  <span className="engineer-option-check">{isSelected ? '已選取' : '選取'}</span>
+
+                                </button>
+
+                              );
+
+                            })}
+
+                          </div>
 
                         </div>
 
