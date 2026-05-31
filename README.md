@@ -165,7 +165,7 @@ npm run cloudflare:deploy
 
 ## 🤖 AI 輔助開發宣告與個人判斷說明
 
-本專案之開發過程中導入了 AI (Antigravity) 進行協作，以下如實申報 AI 使用方式及個人判斷改寫之處：
+本專案採用 **AI-assisted development** 方式完成，開發過程中使用 Codex 與 Google Antigravity 作為 AI pair-programming agents，協助產生初版程式、重構前端互動、排查部署問題與補強文件。以下如實申報 AI 使用方式、個人主導判斷與驗證方式：
 
 ### 0. 總開發時程與迭代階段
 本專案並非一次性完成，而是以「先做出可操作原型，再依測試與回饋逐步修正」的方式推進。整體開發過程大致分為以下幾個階段：
@@ -178,10 +178,12 @@ npm run cloudflare:deploy
 * **階段七：部署與完成收斂**：最後將系統部署到 Cloudflare Pages + D1，補上 README 心路歷程、手機展示方式與雲端同步說明，讓作品可以直接用網址在電腦與手機上展示。
 
 ### 1. AI 用在哪些地方？
+* **AI pair-programming 協作**：Codex 與 Google Antigravity 協助撰寫大部分程式初稿，包含 React 前端互動、Express / Cloudflare Functions API、D1 schema、README 文件與部署腳本。我的角色是負責需求定義、Fab 現場情境設計、功能取捨、錯誤修正、整合測試、雲端部署與最終驗收。
 * **前端骨架與樣式調優**：請 AI 推薦符合半導體科技感（深色科技風、毛玻璃 HSL 漸層）的 CSS 變數配色與表格 Layout 結構，並優化了 Flex/Grid 的響應式排版。
 * **SQLite Async 封裝**：AI 協助生成了將 callback-based 的 `sqlite3` 轉換為 Promise-based（`all`、`get`、`run`）的樣板程式碼。
 
 ### 2. 哪些部分是自己決定或重新改寫的？
+* **開發責任邊界**：雖然程式撰寫大量採用 AI 代理人協作，但我沒有直接把輸出視為完成品。需求排序、功能是否保留、異常狀態流程、手機展示方式、Cloudflare 部署策略、README 說明口吻，以及最終是否符合面試題目，皆由我逐項確認。
 * **根目錄 package.json 啟動鏈整合**：原本 AI 建議分別到 `backend/` 和 `frontend/` 下手動安裝並啟動，這不利於面試官開箱。我決定引入 `concurrently` 並在根目錄撰寫 `install-all` 與 `dev` 指令，將啟動體驗壓縮至最簡。
 * **嚴格的狀態流轉表單防呆**：AI 一開始設計的更新狀態 API 允許空值（如無工程師也可 Assign）。我對後端 `server.js` 與前端 `App.jsx` 進行了雙重防呆改寫——在後端端點加上 `assigned_engineer` 及 `resolution` 的 `400 Bad Request` 驗證，並在前端輸入為空時禁用按鈕，提升系統的健壯性 (Robustness)。
 * **SQLite 預設資料客製**：自己將預設機台與異常資料修改為 ASML 曝光機、Lam 蝕刻機等真實半導體廠會看見的機台編號（如 EXP-01, ETCH-02）及 OOC/OOS 異常情境，使其更貼合華邦電 EAP/EES 崗位的業務場景。
