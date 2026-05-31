@@ -184,3 +184,14 @@ npm run cloudflare:deploy
 * **問題觀察**：原先使用 LocalTunnel 將 Vite 前端分享至手機時，手機端會先出現需要複製 IP 的安全提醒頁，且 Vite 也會因外部網址的 Host header 不在允許清單中，顯示 `Blocked request. This host is not allowed.`。這代表問題不是 React 頁面本身，而是開發伺服器的 host 防護與 tunnel 服務的中介驗證流程共同造成。
 * **修正方向判斷**：我沒有直接把 Vite 的 `allowedHosts` 設為 `true`，因為那會放寬所有來源，對展示用開發伺服器不必要。先前改採 Cloudflare Tunnel 解掉 LocalTunnel 的 IP 驗證頁，但 Quick Tunnel 仍會每次產生不同網址，且 tunnel 停止後網址會失效。因此進一步改用 Tailscale Funnel 作為預設分享方式，讓同一台電腦可以使用固定的 `*.ts.net` 網址；`vite.config.js` 則只允許 `.ts.net` 與備援用的 `.trycloudflare.com`。
 * **落地做法**：`npm.cmd run share` 與 `share-to-mobile.bat` 現在會啟動 Tailscale Funnel。腳本會自動檢查 Tailscale 是否安裝、啟動 `npm.cmd run dev`、等待 5173 前端服務就緒，再使用 `tailscale funnel 5173` 建立公開網址。網址產生後會自動複製到剪貼簿並開啟瀏覽器；若使用環境無法跑 Tailscale，仍可透過 `npm.cmd run share:cloudflare` 使用 Cloudflare Tunnel 備援。
+
+### 5. AI 相關功能的需求來源與心路歷程
+這次不是單純為了展示 AI 而加入 AI，而是先從周遭身為 Fab 工程師的朋友角度思考：「現場值班時最希望系統幫忙減少什麼負擔？」整理後發現，工程師真正需要的不是一個聊天玩具，而是能在異常發生時快速輔助判斷、整理 SOP、減少交接落差，並且能在手機上即時協作的工具。因此我將 AI 相關功能定位成 **Fab Duty Engineer 的輔助決策層**，而不是取代工程師的自動決策。
+
+具體設計方向如下：
+* **AI SOP 診斷助手**：針對異常代碼、設備類型與感測器狀態，產生可能原因、建議檢查項目與處置步驟，幫助值班工程師先建立排查方向。
+* **多模態異常佐證**：在結案流程中允許上傳現場照片或檔案，模擬工程師將機台面板、塔燈、Alarm 畫面作為 AI 判斷脈絡，讓診斷結果不只依賴文字描述。
+* **一鍵帶入結案對策**：AI 產出的 SOP 不直接自動結案，而是先填入 Resolution 欄位，讓 DUDU 或責任工程師確認後再送出，保留現場工程師的專業判斷與責任邊界。
+* **行動協作與交班補強**：依照朋友回饋，現場很多問題不是不知道怎麼修，而是資訊分散在口頭、群組、交班紀錄裡。因此新增交班留言、班內訊息、語音/視訊通話室，讓 AI 診斷、SOP 紀錄與真人協作能放在同一個操作場景中。
+
+我的取捨是：AI 在此系統中扮演「快速整理線索與建議下一步」的角色；真正的 Ack、Assign、Close 仍由值班工程師執行。這樣比較符合 Fab 現場對安全性、可追溯性與責任分工的要求，也比較貼近 EAP/EES 工程師在異常處理時會期待的工具形態。
