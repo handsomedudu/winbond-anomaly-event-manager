@@ -62,3 +62,21 @@ INSERT INTO anomaly_events (event_code, machine_id, severity, description, statu
 -- 4. 已關閉 (Closed) 異常
 INSERT INTO anomaly_events (event_code, machine_id, severity, description, status, operator_id, assigned_engineer, resolution, created_at, updated_at) VALUES
 ('E-3072', 'MET-05', 'Warning', '量測鏡頭校正偏移(Tilt Error)。', 'Closed', 'OP-8805', 'Sarah Wang', '執行鏡頭基準點自動校正(Auto-Calibration)，測試回歸後偏移值歸零，恢復生產。', DATETIME('now', '-24 hours'), DATETIME('now', '-22 hours'));
+
+-- 5. 朋友測試後新增的 Fab/EAP-EES 多情境異常，用於查詢、排序與手機 DEMO
+INSERT INTO anomaly_events (event_code, machine_id, severity, description, status, operator_id, assigned_engineer, created_at, updated_at) VALUES
+('E-4096', 'ETCH-02', 'Critical', 'SECS/GEM 通訊 heartbeat 中斷，EAP 無法取得機台即時狀態。', 'Pending', 'OP-8804', NULL, DATETIME('now', '-45 minutes'), DATETIME('now', '-45 minutes')),
+('E-1536', 'CVD-03', 'Critical', 'Run-to-Run 厚度補償量連續超出上限，疑似 recipe drift。', 'Ack', 'OP-8806', NULL, DATETIME('now', '-2 hours'), DATETIME('now', '-90 minutes')),
+('E-3584', 'EXP-01', 'Warning', '曝光 overlay APC 回饋延遲，批次 wafer map 上傳逾時。', 'Pending', 'OP-8807', NULL, DATETIME('now', '-75 minutes'), DATETIME('now', '-75 minutes')),
+('E-6144', 'PVD-04', 'Warning', 'OHT 搬送完成訊號逾時，Load Port FOUP 狀態未同步。', 'Assign', 'OP-8808', 'David Wu', DATETIME('now', '-5 hours'), DATETIME('now', '-3 hours')),
+('E-8192', 'MET-05', 'Critical', 'DI Water 流量低於管制下限，量測站冷卻迴路觸發 interlock。', 'Pending', 'OP-8810', NULL, DATETIME('now', '-20 minutes'), DATETIME('now', '-20 minutes')),
+('E-2304', 'EXP-01', 'Warning', 'Reticle barcode 讀取失敗，光罩 ID 與批次 recipe 對應資料不一致。', 'Ack', 'OP-8811', NULL, DATETIME('now', '-110 minutes'), DATETIME('now', '-85 minutes')),
+('E-7424', 'ETCH-02', 'Critical', 'Endpoint detection 光譜訊號漂移，蝕刻終點判定失敗。', 'Pending', 'OP-8812', NULL, DATETIME('now', '-12 minutes'), DATETIME('now', '-12 minutes')),
+('E-4864', 'CVD-03', 'Warning', 'NH3 gas cabinet 壓力波動，製程氣體供應低於預警門檻。', 'Assign', 'OP-8813', 'Alice Lin', DATETIME('now', '-4 hours'), DATETIME('now', '-150 minutes')),
+('E-9216', 'PVD-04', 'Critical', 'Chamber plasma ignition 連續三片 wafer 點火失敗，疑似 RF matching 異常。', 'Ack', 'OP-8814', NULL, DATETIME('now', '-160 minutes'), DATETIME('now', '-130 minutes')),
+('E-6656', 'MET-05', 'Warning', 'CD-SEM recipe download from MES 逾時，量測站等待派工參數。', 'Pending', 'OP-8815', NULL, DATETIME('now', '-32 minutes'), DATETIME('now', '-32 minutes')),
+('E-1120', 'EXP-01', 'Critical', 'EES 偵測曝光 dose trend 觸發 SPC rule，系統自動 hold lot。', 'Assign', 'OP-8816', 'Sarah Wang', DATETIME('now', '-7 hours'), DATETIME('now', '-5 hours')),
+('E-5376', 'ETCH-02', 'Warning', 'APC 參數回寫重複，Run-to-Run control 本批次被略過。', 'Pending', 'OP-8817', NULL, DATETIME('now', '-58 minutes'), DATETIME('now', '-58 minutes')),
+('E-7808', 'CVD-03', 'Critical', 'Furnace zone 3 溫度偏移超限，批次進片前觸發 interlock。', 'Pending', 'OP-8818', NULL, DATETIME('now', '-8 minutes'), DATETIME('now', '-8 minutes')),
+('E-9472', 'PVD-04', 'Warning', 'Vacuum pump 電流趨勢異常，預知保養門檻已達警戒值。', 'Ack', 'OP-8819', NULL, DATETIME('now', '-3 hours'), DATETIME('now', '-125 minutes')),
+('E-5888', 'MET-05', 'Critical', 'Metrology wafer map 與 MES lot 資訊比對失敗，疑似批次混片風險。', 'Pending', 'OP-8820', NULL, DATETIME('now', '-5 minutes'), DATETIME('now', '-5 minutes'));
